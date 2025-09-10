@@ -1,0 +1,81 @@
+services:
+    dev:
+        image: mcr.microsoft.com/devcontainers/base:ubuntu
+        volumes:
+            - .:/workspaces/app # ルートをマウント
+        command: sleep infinity
+        networks: [ appnet ]
+
+    frontend:
+        image: node:20
+        container_name: pf_frontend
+        working_dir: /app
+        volumes:
+            - ./frontend:/app
+        command: sh -c "npm install && npm run dev"
+        ports:
+            - "3100:3000"
+        depends_on:
+            - backend
+        environment:
+            - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+        restart: unless-stopped
+
+    backend:
+        image: maven:3.9-eclipse-temurin-21
+        container_name: pf_backend
+        working_dir: /app
+        volumes:
+            - ./backend:/app # ソースコードをマウント
+            - ~/.m2:/root/.m2 # Mavenキャッシュを共有
+        command: mvn spring-boot:run -Dspring-boot.run.jvmArguments="-Dspring.devtools.restart.enabled=true -Dspring.devtools.livereload.enabled=true"
+        ports:
+            - "8100:8080"
+        environment:
+            - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
+            - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+            - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+            - AWS_REGION=${AWS_REGION}
+            - S3_ENDPOINT=${S3_ENDPOINT}
+            - S3_BUCKET=${S3_BUCKET}
+            - S3_ACCESS_KEY=${S3_ACCESS_KEY}
+            - S3_SECRET_KEY=${S3_SECRET_KEY}
+        depends_on:
+            - db
+            - minio
+        restart: unless-stopped
+
+    db:
+        image: postgres:15
+        container_name: pf_db
+        environment:
+            - POSTGRES_DB=${POSTGRES_DB}
+            - POSTGRES_USER=${POSTGRES_USER}
+            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+        volumes:
+            - db_data:/var/lib/postgresql/data
+        ports:
+            - "5532:5432"
+        restart: unless-stopped
+
+    minio:
+        image: minio/minio
+        container_name: pf_minio
+        command: server /data --console-address ":9001"
+        environment:
+            - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+            - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+        volumes:
+            - minio_data:/data
+        ports:
+            - "9000:9000" # S3 API
+            - "9001:9001" # Web Console
+        restart: unless-stopped
+
+volumes:
+    db_data:
+    minio_data:
+
+
+networks:
+    appnet: {}

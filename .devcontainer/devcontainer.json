@@ -1,0 +1,23 @@
+{
+    "name": "java-portfolio-monorepo",
+    "dockerComposeFile": [
+        "../docker-compose.yml"
+    ],
+    "service": "dev",
+    "workspaceFolder": "/workspaces/app",
+    "features": {
+        "ghcr.io/devcontainers/features/java:1": {
+            "version": "21"
+        },
+        "ghcr.io/devcontainers/features/node:1": {
+            "version": "20"
+        }
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "vscjava.vscode-java-pack"
+            ]
+        }
+    }
+}
