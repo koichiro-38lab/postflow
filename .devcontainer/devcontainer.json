@@ -19,5 +19,6 @@
                 "vscjava.vscode-java-pack"
             ]
         }
-    }
+    },
+    "remoteUser": "vscode"
 }
