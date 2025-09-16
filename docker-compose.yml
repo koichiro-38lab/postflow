@@ -1,12 +1,4 @@
 services:
-    dev:
-        image: mcr.microsoft.com/devcontainers/base:ubuntu
-        volumes:
-            - .:/workspaces/app # ルートをマウント
-        command: sleep infinity
-        restart: unless-stopped
-        networks: [ appnet ]
-
     frontend:
         image: node:20
         container_name: pf_frontend
@@ -25,6 +17,7 @@ services:
     backend:
         image: maven:3.9-eclipse-temurin-21
         container_name: pf_backend
+        user: "${UID}:${GID}"
         working_dir: /app
         volumes:
             - ./backend:/app # ソースコードをマウント
