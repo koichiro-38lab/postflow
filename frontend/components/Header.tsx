@@ -27,12 +27,11 @@ export default function Header() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center py-6">
                     <Link href="/">
-                        <h1 className="text-3xl font-bold text-foreground cursor-pointer">
+                        <span className="text-3xl font-bold text-foreground cursor-pointer">
                             PostFlow
-                        </h1>
+                        </span>
                     </Link>
                     <div className="flex items-center gap-2">
-                        <ThemeToggle />
                         {isClient && (
                             <>
                                 {user ? (
@@ -60,6 +59,7 @@ export default function Header() {
                                 )}
                             </>
                         )}
+                        <ThemeToggle />
                     </div>
                 </div>
             </div>
