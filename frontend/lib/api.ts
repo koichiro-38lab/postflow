@@ -1,58 +1,109 @@
-import axios from "axios";
+import axios, { AxiosError, AxiosRequestConfig } from "axios";
+import {
+    useAuthStore,
+    getAccessTokenFromCookie,
+    getRefreshTokenFromCookie,
+} from "@/lib/auth-store";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
+const isBrowser = typeof window !== "undefined";
+
+type HeadersWithOptionalSet = {
+    set?: (name: string, value: string) => void;
+    [key: string]: unknown;
+};
+
+const applyAuthorizationHeader = (config: AxiosRequestConfig, token: string) => {
+    if (config.headers) {
+        const headers = config.headers as HeadersWithOptionalSet;
+        if (typeof headers.set === "function") {
+            headers.set("Authorization", `Bearer ${token}`);
+        } else {
+            headers["Authorization"] = `Bearer ${token}`;
+        }
+    } else {
+        config.headers = { Authorization: `Bearer ${token}` };
+    }
+};
+
 const api = axios.create({
     baseURL: API_BASE_URL,
-    headers: {
-        "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
 });
 
-// Request interceptor to add auth token
+let isRefreshing = false;
+let refreshQueue: Array<(token: string | null) => void> = [];
+
 api.interceptors.request.use((config) => {
-    const token = localStorage.getItem("accessToken");
+    const token = getAccessTokenFromCookie();
     if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+        applyAuthorizationHeader(config, token);
     }
     return config;
 });
 
-// トークンリフレッシュを試みるレスポンスインターセプター
 api.interceptors.response.use(
-    (response) => response,
-    async (error) => {
-        if (error.response?.status === 401) {
-            // トークンが無効な場合、リフレッシュを試みる
-            const refreshToken = localStorage.getItem("refreshToken");
-            if (refreshToken) {
-                try {
-                    const refreshResponse = await axios.post(
-                        `${API_BASE_URL}/api/auth/refresh`,
-                        {
-                            refreshToken,
-                        }
-                    );
-                    const { accessToken } = refreshResponse.data;
-                    localStorage.setItem("accessToken", accessToken);
-                    document.cookie = `accessToken=${accessToken}; path=/; max-age=86400`;
+    (res) => res,
+    async (error: AxiosError) => {
+        const original = error.config as
+            | (AxiosRequestConfig & { _retry?: boolean })
+            | undefined;
+        const status = error.response?.status;
+        const isRefreshCall = original?.url?.includes("/api/auth/refresh");
 
-                    // 元のリクエストを新しいトークンで再試行
-                    error.config.headers.Authorization = `Bearer ${accessToken}`;
-                    return axios(error.config);
-                } catch {
-                    // リフレッシュに失敗した場合、ログアウト処理を実行
-                    localStorage.removeItem("accessToken");
-                    localStorage.removeItem("refreshToken");
-                    document.cookie = "accessToken=; path=/; max-age=0";
-                    window.location.href = "/login";
+        if (status === 401 && original && !original._retry && !isRefreshCall) {
+            if (isRefreshing) {
+                return new Promise((resolve, reject) => {
+                    refreshQueue.push((token) => {
+                        if (!token) {
+                            reject(error);
+                            return;
+                        }
+                        original._retry = true;
+                        applyAuthorizationHeader(original, token);
+                        resolve(api(original));
+                    });
+                });
+            }
+
+            original._retry = true;
+            isRefreshing = true;
+
+            try {
+                const refreshToken = getRefreshTokenFromCookie();
+                if (!refreshToken) throw new Error("no refresh token");
+
+                const accessToken = await useAuthStore.getState().refresh();
+                if (!accessToken) throw new Error("refresh failed");
+
+                refreshQueue.forEach((cb) => cb(accessToken));
+                refreshQueue = [];
+                isRefreshing = false;
+
+                applyAuthorizationHeader(original, accessToken);
+                return api(original);
+            } catch (e) {
+                refreshQueue.forEach((cb) => cb(null));
+                refreshQueue = [];
+                isRefreshing = false;
+                if (isBrowser) {
+                    useAuthStore
+                        .getState()
+                        .logout({ redirect: true })
+                        .catch(() => {
+                            window.location.href = "/login";
+                        });
                 }
-            } else {
-                window.location.href = "/login";
+                return Promise.reject(e);
             }
         }
+
         return Promise.reject(error);
     }
 );
 
 export default api;
+
+export const isApiError = (error: unknown): error is AxiosError =>
+    axios.isAxiosError(error);

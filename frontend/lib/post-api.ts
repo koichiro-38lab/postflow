@@ -1,20 +1,62 @@
-import axios from "axios";
+import api from "@/lib/api";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+
+export interface CategorySummary {
+    id: number;
+    name: string;
+    slug: string;
+}
 
 export interface Post {
     id: string;
     title: string;
     slug: string;
     publishedAt: string | null;
+    category: CategorySummary | null;
+    status: string;
     // 必要に応じて他のフィールドも追加
 }
 
-export async function fetchPosts(accessToken?: string): Promise<Post[]> {
-    const res = await axios.get(`${API_BASE_URL}/api/admin/posts`, {
-        headers: accessToken
-            ? { Authorization: `Bearer ${accessToken}` }
-            : undefined,
-    });
-    return res.data.content || res.data;
+export interface PostsResponse {
+    content: Post[];
+    totalElements: number;
+    totalPages: number;
+    size: number;
+    number: number; // 現在のページ (0始まり)
+}
+
+export async function fetchPosts(
+    _accessToken?: string,
+    page: number = 0,
+    size: number = 10,
+    sort?: string,
+    order?: string,
+    status?: string,
+    categoryId?: string
+): Promise<PostsResponse> {
+    const params: Record<string, string | number> = {
+        page,
+        size,
+    };
+
+    if (sort) {
+        params.sort = sort;
+        if (order) {
+            params.sort = `${sort},${order}`;
+        }
+    }
+
+    if (status) params.status = status;
+    if (categoryId) params.categoryId = categoryId;
+
+    const res = await api.get(`${API_BASE_URL}/api/admin/posts`, { params });
+    return res.data;
+}
+
+export async function fetchCategories(
+    _accessToken?: string
+): Promise<CategorySummary[]> {
+    const res = await api.get(`${API_BASE_URL}/api/admin/categories`);
+    return res.data;
 }

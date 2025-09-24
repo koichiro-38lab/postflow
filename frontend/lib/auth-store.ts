@@ -1,233 +1,216 @@
+"use client";
+
+import axios from "axios";
 import { create } from "zustand";
-import axios, { AxiosError } from "axios";
+import { devtools } from "zustand/middleware";
 
-interface User {
-    id: string;
-    email: string;
-    role: string;
-}
+type DecodedToken = {
+    sub?: string | number;
+    exp?: number; // seconds
+    roles?: string[];
+    username?: string;
+    id?: number;
+};
 
-interface AuthState {
+type User = {
+    id: number;
+    username: string;
+    roles: string[];
+};
+
+type LogoutOptions = {
+    redirect?: boolean;
+};
+
+type AuthState = {
     user: User | null;
     accessToken: string | null;
+    isRefreshing: boolean;
     isLoading: boolean;
     error: string | null;
+    setUser: (user: User | null) => void;
+    setAccessToken: (token: string | null) => void;
     login: (email: string, password: string) => Promise<void>;
-    logout: () => void;
-    refreshToken: () => Promise<void>;
-}
+    logout: (options?: LogoutOptions) => Promise<void>;
+    refresh: () => Promise<string | null>;
+};
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const ACCESS_COOKIE = "accessToken";
+const REFRESH_COOKIE = "refreshToken";
+const ACCESS_COOKIE_TTL_DAYS = 1;
+const REFRESH_COOKIE_TTL_DAYS = 7;
 
-// クッキー保存時のsecure属性を環境に応じて切り替え
-const isLocal =
-    typeof window !== "undefined" && window.location.protocol === "http:";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
+const isBrowser = typeof window !== "undefined";
 
-// デバッグ用ログ
-console.log("API_BASE_URL:", API_BASE_URL);
-
-// axiosのデフォルト設定
-axios.defaults.baseURL = API_BASE_URL;
-// 開発環境ではwithCredentialsをtrueにしないとCookieが送信されない
-// axios.defaults.withCredentials = true;
-
-// リクエストインターセプターを設定
-axios.interceptors.request.use((config) => {
-    if (typeof window !== "undefined") {
-        // 認証が不要なエンドポイントをチェック（/api/auth/*は認証不要）
-        const isAuthEndpoint = config.url?.includes("/api/auth/");
-
-        if (!isAuthEndpoint) {
-            const accessToken = document.cookie
-                .split("; ")
-                .find((row) => row.startsWith("accessToken="))
-                ?.split("=")[1];
-
-            if (accessToken) {
-                config.headers.Authorization = `Bearer ${accessToken}`;
-            }
-        }
-    }
-    return config;
+const authClient = axios.create({
+    baseURL: API_BASE_URL || undefined,
+    withCredentials: true,
+    headers: { "Content-Type": "application/json" },
 });
 
-// 401レスポンスでトークンリフレッシュを試みるインターセプター
-axios.interceptors.response.use(
-    (response) => response,
-    async (error) => {
-        const originalRequest = error.config;
-        const isAuthEndpoint = originalRequest.url?.includes("/api/auth/");
+const setCookie = (name: string, value: string, days: number) => {
+    if (!isBrowser) return;
+    const expires = new Date();
+    expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+    document.cookie = `${name}=${value}; expires=${expires.toUTCString()}; path=/; samesite=strict`;
+};
 
-        if (
-            error.response?.status === 401 &&
-            !originalRequest._retry &&
-            !isAuthEndpoint // 認証エンドポイント自体の401はリフレッシュしない
-        ) {
-            originalRequest._retry = true;
+const deleteCookie = (name: string) => {
+    if (!isBrowser) return;
+    document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/`;
+};
 
-            try {
-                await useAuthStore.getState().refreshToken();
-                // Retry the original request with new token
-                return axios(originalRequest);
-            } catch (refreshError) {
-                useAuthStore.getState().logout();
-                return Promise.reject(refreshError);
-            }
-        }
+const getCookie = (name: string): string | null => {
+    if (!isBrowser) return null;
+    return (
+        document.cookie
+            .split("; ")
+            .find((row) => row.startsWith(`${name}=`))
+            ?.split("=")[1] || null
+    );
+};
 
-        return Promise.reject(error);
+const decodeJwt = (token: string): DecodedToken | null => {
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+    try {
+        const json = atob(parts[1]);
+        return JSON.parse(json) as DecodedToken;
+    } catch {
+        return null;
     }
-);
+};
 
-export const useAuthStore = create<AuthState>((set, get) => {
-    // 初期状態をクッキーから取得
-    let initialUser: User | null = null;
-    let initialAccessToken: string | null = null;
+const decodeUserFromAccess = (token: string): User | null => {
+    const decoded = decodeJwt(token);
+    if (!decoded) return null;
+    const now = Math.floor(Date.now() / 1000);
+    if (!decoded.exp || decoded.exp < now) return null;
+    const id =
+        typeof decoded.id === "number"
+            ? decoded.id
+            : parseInt(String(decoded.sub ?? 0), 10);
+    const username = decoded.username ?? String(decoded.sub ?? "");
+    const roles = decoded.roles ?? [];
+    return { id: Number.isFinite(id) ? id : 0, username, roles };
+};
 
-    if (typeof window !== "undefined") {
-        const cookies = document.cookie.split(";").reduce((acc, cookie) => {
-            const [key, value] = cookie.trim().split("=");
-            acc[key] = value;
-            return acc;
-        }, {} as Record<string, string>);
+let refreshPromise: Promise<string | null> | null = null;
 
-        initialAccessToken = cookies.accessToken || null;
-        if (initialAccessToken) {
-            try {
-                const payload = JSON.parse(
-                    atob(initialAccessToken.split(".")[1])
-                );
-                initialUser = {
-                    id: payload.sub,
-                    email: payload.email,
-                    role: payload.role,
-                };
-            } catch (error) {
-                console.error("Failed to parse token:", error);
-                initialAccessToken = null;
-            }
-        }
-    }
-
-    return {
-        user: initialUser,
-        accessToken: initialAccessToken,
+export const useAuthStore = create<AuthState>()(
+    devtools((set, get) => ({
+        user: null,
+        accessToken: null,
+        isRefreshing: false,
         isLoading: false,
         error: null,
 
+        setUser: (user) => set({ user }),
+        setAccessToken: (token) => set({ accessToken: token }),
+
         login: async (email: string, password: string) => {
-            console.log("Login attempt started for:", email);
             set({ isLoading: true, error: null });
-            console.log("Set isLoading to true");
-            console.log("API URL:", `${API_BASE_URL}/api/auth/login`);
             try {
-                const response = await axios.post(
-                    `${API_BASE_URL}/api/auth/login`,
-                    {
-                        email,
-                        password,
-                    },
-                    {
-                        withCredentials: true,
-                    }
-                );
-
-                console.log("Login response received");
-                const { accessToken, refreshToken } = response.data;
-
-                // Store tokens in cookies (secure属性は本番のみ)
-                document.cookie = `accessToken=${accessToken}; path=/; samesite=strict${
-                    isLocal ? "" : "; secure"
-                }`;
-                document.cookie = `refreshToken=${refreshToken}; path=/; samesite=strict${
-                    isLocal ? "" : "; secure"
-                }`;
-
-                // Decode user from token
-                const payload = JSON.parse(atob(accessToken.split(".")[1]));
-                const user: User = {
-                    id: payload.sub,
-                    email: payload.email,
-                    role: payload.role,
+                const res = await authClient.post("/api/auth/login", { email, password });
+                const { accessToken, refreshToken } = res.data as {
+                    accessToken: string;
+                    refreshToken: string;
                 };
-
-                set({ user, accessToken, isLoading: false });
-                console.log("Login successful, set isLoading to false");
-            } catch (error) {
-                console.log("Login failed, setting isLoading to false");
-                const message =
-                    error instanceof AxiosError
-                        ? error.response?.data?.message ||
-                          "ログインに失敗しました"
-                        : "ログインに失敗しました";
-                set({ error: message, isLoading: false });
-                throw error;
-            }
-        },
-
-        logout: () => {
-            // Clear cookies
-            document.cookie =
-                "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-            document.cookie =
-                "refreshToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-            set({ user: null, accessToken: null, error: null });
-        },
-
-        refreshToken: async () => {
-            try {
-                // Get refresh token from cookie
-                const refreshToken = document.cookie
-                    .split("; ")
-                    .find((row) => row.startsWith("refreshToken="))
-                    ?.split("=")[1];
-
-                if (!refreshToken) {
-                    throw new Error("No refresh token available");
+                if (accessToken) {
+                    setCookie(ACCESS_COOKIE, accessToken, ACCESS_COOKIE_TTL_DAYS);
                 }
-
-                const response = await axios.post(
-                    `${API_BASE_URL}/api/auth/refresh`,
-                    { refreshToken } // Send refresh token in body
-                );
-
-                const { accessToken, refreshToken: newRefreshToken } =
-                    response.data;
-
-                // Update both tokens in cookies (secure属性は本番のみ)
-                document.cookie = `accessToken=${accessToken}; path=/; samesite=strict${
-                    isLocal ? "" : "; secure"
-                }`;
-                document.cookie = `refreshToken=${newRefreshToken}; path=/; samesite=strict${
-                    isLocal ? "" : "; secure"
-                }`;
-
-                // Update user from new token
-                const payload = JSON.parse(atob(accessToken.split(".")[1]));
-                const user: User = {
-                    id: payload.sub,
-                    email: payload.email,
-                    role: payload.role,
-                };
-
-                set({ user, accessToken });
-            } catch (error) {
-                // If refresh fails, logout
-                get().logout();
-                throw error;
+                if (refreshToken) {
+                    setCookie(REFRESH_COOKIE, refreshToken, REFRESH_COOKIE_TTL_DAYS);
+                }
+                const user = decodeUserFromAccess(accessToken);
+                set({ accessToken, user, isLoading: false, error: null });
+            } catch (err: unknown) {
+                let message = "ログインに失敗しました";
+                if (axios.isAxiosError(err)) {
+                    const data = err.response?.data as unknown;
+                    if (
+                        data &&
+                        typeof data === "object" &&
+                        "message" in (data as Record<string, unknown>) &&
+                        typeof (data as Record<string, unknown>)["message"] === "string"
+                    ) {
+                        message = (data as Record<string, string>)["message"];
+                    }
+                }
+                set({ isLoading: false, error: String(message) });
+                throw err;
             }
         },
-    };
-});
 
-// Initialize auth state from cookies
-if (typeof window !== "undefined") {
-    const accessToken = document.cookie
-        .split("; ")
-        .find((row) => row.startsWith("accessToken="))
-        ?.split("=")[1];
+        logout: async (options?: LogoutOptions) => {
+            const redirect = options?.redirect ?? true;
+            deleteCookie(ACCESS_COOKIE);
+            deleteCookie(REFRESH_COOKIE);
+            refreshPromise = null;
+            set({ user: null, accessToken: null, isRefreshing: false });
+            if (redirect && isBrowser) {
+                window.location.href = "/login";
+            }
+        },
 
-    if (accessToken) {
-        useAuthStore.setState({ accessToken });
+        refresh: async () => {
+            if (!isBrowser) return null;
+            if (refreshPromise) return refreshPromise;
+
+            const refreshToken = getCookie(REFRESH_COOKIE);
+            if (!refreshToken) {
+                return null;
+            }
+
+            const pending = (async () => {
+                try {
+                    set({ isRefreshing: true });
+                    const res = await authClient.post("/api/auth/refresh", {
+                        refreshToken,
+                    });
+                    const { accessToken: newAccessToken, refreshToken: newRefresh } =
+                        res.data as { accessToken: string; refreshToken?: string };
+
+                    if (newAccessToken) {
+                        setCookie(ACCESS_COOKIE, newAccessToken, ACCESS_COOKIE_TTL_DAYS);
+                        const user = decodeUserFromAccess(newAccessToken);
+                        set({ accessToken: newAccessToken, user });
+                    }
+                    if (newRefresh) {
+                        setCookie(REFRESH_COOKIE, newRefresh, REFRESH_COOKIE_TTL_DAYS);
+                    }
+                    return newAccessToken ?? null;
+                } catch (err) {
+                    if (axios.isAxiosError(err)) {
+                        const status = err.response?.status ?? 0;
+                        if (status === 401 || status === 403) {
+                            await get().logout({ redirect: true });
+                            return null;
+                        }
+                    }
+                    return null;
+                } finally {
+                    set({ isRefreshing: false });
+                    refreshPromise = null;
+                }
+            })();
+
+            refreshPromise = pending;
+            return pending;
+        },
+    }))
+);
+
+if (isBrowser) {
+    const existingToken = getCookie(ACCESS_COOKIE);
+    const user = existingToken ? decodeUserFromAccess(existingToken) : null;
+    if (user && existingToken) {
+        useAuthStore.setState({ user, accessToken: existingToken });
+    } else if (existingToken && !user) {
+        deleteCookie(ACCESS_COOKIE);
     }
 }
+
+export const getAccessTokenFromCookie = () => getCookie(ACCESS_COOKIE);
+export const getRefreshTokenFromCookie = () => getCookie(REFRESH_COOKIE);
