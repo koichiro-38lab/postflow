@@ -12,6 +12,8 @@ services:
             - backend
         environment:
             - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+            - NEXT_PUBLIC_MEDIA_BASE_URL=${NEXT_PUBLIC_MEDIA_BASE_URL}
+            - NEXT_PUBLIC_MEDIA_BUCKET=${NEXT_PUBLIC_MEDIA_BUCKET}
         restart: unless-stopped
 
     backend:
@@ -34,6 +36,8 @@ services:
             - S3_BUCKET=${S3_BUCKET}
             - S3_ACCESS_KEY=${S3_ACCESS_KEY}
             - S3_SECRET_KEY=${S3_SECRET_KEY}
+            - APP_MEDIA_USE_IN_MEMORY=${APP_MEDIA_USE_IN_MEMORY}
+            - APP_MEDIA_KEY_PREFIX=${APP_MEDIA_KEY_PREFIX}
             - JWT_SECRET=${JWT_SECRET}
             - JWT_ACCESS_TTL=${JWT_ACCESS_TTL}
             - JWT_REFRESH_TTL=${JWT_REFRESH_TTL}
@@ -56,18 +60,38 @@ services:
         restart: unless-stopped
 
     minio:
-        image: minio/minio
+        image: minio/minio:RELEASE.2025-09-07T16-13-09Z
         container_name: pf_minio
         command: server /data --console-address ":9001"
         environment:
             - MINIO_ROOT_USER=${MINIO_ROOT_USER}
             - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+            - MINIO_CORS_ALLOW_ORIGIN=http://localhost:3100
+            - MINIO_CORS_ALLOW_METHODS=GET,PUT,POST,DELETE,HEAD
+            - MINIO_CORS_ALLOW_HEADERS=*
         volumes:
             - minio_data:/data
         ports:
             - "9000:9000" # S3 API
             - "9001:9001" # Web Console
         restart: unless-stopped
+
+    minio-init:
+        image: minio/mc
+        container_name: pf_minio_init
+        depends_on:
+            minio:
+                condition: service_started
+        entrypoint: >
+            sh -c '
+              mc alias set local http://minio:9000 "${MINIO_ROOT_USER}" "${MINIO_ROOT_PASSWORD}" &&
+              mc anonymous set download local/${S3_BUCKET}
+            '
+        environment:
+            - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+            - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+            - S3_BUCKET=${S3_BUCKET}
+        restart: "no"
 
 volumes:
     db_data:
