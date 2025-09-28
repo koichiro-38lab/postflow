@@ -1,7 +1,7 @@
 "use client";
 
 import { useEditor, EditorContent } from "@tiptap/react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import Link from "@tiptap/extension-link";
@@ -26,6 +26,10 @@ import {
     Redo,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { MediaPickerDialog } from "@/components/admin/media/MediaPickerDialog";
+import type { SucceededMediaItem } from "@/features/admin/media/types";
+import { buildMediaUrl } from "@/lib/media-url";
+import { useToast } from "@/hooks/use-toast";
 
 interface TipTapEditorProps {
     content: string;
@@ -38,7 +42,10 @@ export function TipTapEditor({
     onChange,
     className,
 }: TipTapEditorProps) {
+    const { toast } = useToast();
     const [isMounted, setIsMounted] = useState(false);
+    // メディアピッカー表示状態
+    const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
 
     useEffect(() => {
         setIsMounted(true);
@@ -83,27 +90,9 @@ export function TipTapEditor({
         },
     });
 
-    // クライアントサイドでのみレンダリング
-    if (!isMounted) {
-        return (
-            <div
-                className={cn("border rounded-md min-h-[300px] p-4", className)}
-            >
-                <div className="animate-pulse">
-                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                    <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
-                    <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-                </div>
-            </div>
-        );
-    }
-
     const addImage = () => {
         if (!editor) return;
-        const url = window.prompt("画像のURLを入力してください:");
-        if (url) {
-            editor.chain().focus().setImage({ src: url }).run();
-        }
+        setMediaPickerOpen(true);
     };
 
     const addLink = () => {
@@ -128,185 +117,228 @@ export function TipTapEditor({
             .run();
     };
 
-    return (
-        <div className={cn("border rounded-md", className)}>
-            {/* ツールバー */}
-            {editor && (
-                <div className="border-b p-2 flex flex-wrap gap-1">
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                            editor.chain().focus().toggleBold().run()
-                        }
-                        className={cn(editor.isActive("bold") && "bg-muted")}
-                    >
-                        <Bold className="h-4 w-4" />
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                            editor.chain().focus().toggleItalic().run()
-                        }
-                        className={cn(editor.isActive("italic") && "bg-muted")}
-                    >
-                        <Italic className="h-4 w-4" />
-                    </Button>
+    // メディア選択時の処理
+    const handleMediaSelect = useCallback(
+        (item: SucceededMediaItem) => {
+            if (!editor) return;
+            // 画像URL解析
+            const src = item.publicUrl ?? buildMediaUrl(item.storageKey);
+            if (!src) {
+                toast({
+                    title: "画像を挿入できません",
+                    description: "選択したメディアのURLを取得できませんでした",
+                    variant: "destructive",
+                });
+                return;
+            }
+            const alt = item.altText || item.filename;
+            editor.chain().focus().setImage({ src, alt }).run();
+            setMediaPickerOpen(false);
+        },
+        [editor, toast]
+    );
 
-                    <div className="w-px h-6 bg-border mx-1" />
-
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                            editor
-                                .chain()
-                                .focus()
-                                .toggleHeading({ level: 1 })
-                                .run()
-                        }
-                        className={cn(
-                            editor.isActive("heading", { level: 1 }) &&
-                                "bg-muted"
-                        )}
-                    >
-                        <Heading1 className="h-4 w-4" />
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                            editor
-                                .chain()
-                                .focus()
-                                .toggleHeading({ level: 2 })
-                                .run()
-                        }
-                        className={cn(
-                            editor.isActive("heading", { level: 2 }) &&
-                                "bg-muted"
-                        )}
-                    >
-                        <Heading2 className="h-4 w-4" />
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                            editor
-                                .chain()
-                                .focus()
-                                .toggleHeading({ level: 3 })
-                                .run()
-                        }
-                        className={cn(
-                            editor.isActive("heading", { level: 3 }) &&
-                                "bg-muted"
-                        )}
-                    >
-                        <Heading3 className="h-4 w-4" />
-                    </Button>
-
-                    <div className="w-px h-6 bg-border mx-1" />
-
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                            editor.chain().focus().toggleBulletList().run()
-                        }
-                        className={cn(
-                            editor.isActive("bulletList") && "bg-muted"
-                        )}
-                    >
-                        <List className="h-4 w-4" />
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                            editor.chain().focus().toggleOrderedList().run()
-                        }
-                        className={cn(
-                            editor.isActive("orderedList") && "bg-muted"
-                        )}
-                    >
-                        <ListOrdered className="h-4 w-4" />
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() =>
-                            editor.chain().focus().toggleBlockquote().run()
-                        }
-                        className={cn(
-                            editor.isActive("blockquote") && "bg-muted"
-                        )}
-                    >
-                        <Quote className="h-4 w-4" />
-                    </Button>
-
-                    <div className="w-px h-6 bg-border mx-1" />
-
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={addImage}
-                    >
-                        <ImageIcon className="h-4 w-4" />
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={addLink}
-                    >
-                        <LinkIcon className="h-4 w-4" />
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={addTable}
-                    >
-                        <TableIcon className="h-4 w-4" />
-                    </Button>
-
-                    <div className="w-px h-6 bg-border mx-1" />
-
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => editor.chain().focus().undo().run()}
-                        disabled={!editor.can().undo()}
-                    >
-                        <Undo className="h-4 w-4" />
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => editor.chain().focus().redo().run()}
-                        disabled={!editor.can().redo()}
-                    >
-                        <Redo className="h-4 w-4" />
-                    </Button>
+    // クライアントサイドでのみレンダリング
+    if (!isMounted) {
+        return (
+            <div
+                className={cn("border rounded-md min-h-[300px] p-4", className)}
+            >
+                <div className="animate-pulse">
+                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+                    <div className="h-4 bg-gray-200 rounded w-2/3"></div>
                 </div>
-            )}
+            </div>
+        );
+    }
 
-            {/* エディタ本体 */}
-            <EditorContent editor={editor} />
-        </div>
+    return (
+        <>
+            <div className={cn("border rounded-md", className)}>
+                {/* ツールバー */}
+                {editor && (
+                    <div className="border-b p-2 flex flex-wrap gap-1">
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                                editor.chain().focus().toggleBold().run()
+                            }
+                            className={cn(editor.isActive("bold") && "bg-muted")}
+                        >
+                            <Bold className="h-4 w-4" />
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                                editor.chain().focus().toggleItalic().run()
+                            }
+                            className={cn(editor.isActive("italic") && "bg-muted")}
+                        >
+                            <Italic className="h-4 w-4" />
+                        </Button>
+
+                        <div className="w-px h-6 bg-border mx-1" />
+
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                                editor
+                                    .chain()
+                                    .focus()
+                                    .toggleHeading({ level: 1 })
+                                    .run()
+                            }
+                            className={cn(
+                                editor.isActive("heading", { level: 1 }) &&
+                                    "bg-muted"
+                            )}
+                        >
+                            <Heading1 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                                editor
+                                    .chain()
+                                    .focus()
+                                    .toggleHeading({ level: 2 })
+                                    .run()
+                            }
+                            className={cn(
+                                editor.isActive("heading", { level: 2 }) &&
+                                    "bg-muted"
+                            )}
+                        >
+                            <Heading2 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                                editor
+                                    .chain()
+                                    .focus()
+                                    .toggleHeading({ level: 3 })
+                                    .run()
+                            }
+                            className={cn(
+                                editor.isActive("heading", { level: 3 }) &&
+                                    "bg-muted"
+                            )}
+                        >
+                            <Heading3 className="h-4 w-4" />
+                        </Button>
+
+                        <div className="w-px h-6 bg-border mx-1" />
+
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                                editor.chain().focus().toggleBulletList().run()
+                            }
+                            className={cn(
+                                editor.isActive("bulletList") && "bg-muted"
+                            )}
+                        >
+                            <List className="h-4 w-4" />
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                                editor.chain().focus().toggleOrderedList().run()
+                            }
+                            className={cn(
+                                editor.isActive("orderedList") && "bg-muted"
+                            )}
+                        >
+                            <ListOrdered className="h-4 w-4" />
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                                editor.chain().focus().toggleBlockquote().run()
+                            }
+                            className={cn(
+                                editor.isActive("blockquote") && "bg-muted"
+                            )}
+                        >
+                            <Quote className="h-4 w-4" />
+                        </Button>
+
+                        <div className="w-px h-6 bg-border mx-1" />
+
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={addImage}
+                        >
+                            <ImageIcon className="h-4 w-4" />
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={addLink}
+                        >
+                            <LinkIcon className="h-4 w-4" />
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={addTable}
+                        >
+                            <TableIcon className="h-4 w-4" />
+                        </Button>
+
+                        <div className="w-px h-6 bg-border mx-1" />
+
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => editor.chain().focus().undo().run()}
+                            disabled={!editor.can().undo()}
+                        >
+                            <Undo className="h-4 w-4" />
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => editor.chain().focus().redo().run()}
+                            disabled={!editor.can().redo()}
+                        >
+                            <Redo className="h-4 w-4" />
+                        </Button>
+                    </div>
+                )}
+
+                {/* エディタ本体 */}
+                <EditorContent editor={editor} />
+            </div>
+            <MediaPickerDialog
+                open={mediaPickerOpen}
+                onOpenChange={setMediaPickerOpen}
+                onSelect={handleMediaSelect}
+            />
+        </>
     );
 }
