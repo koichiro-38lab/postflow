@@ -7,28 +7,30 @@ import type {
 } from "@/features/admin/media/types";
 import { UPLOAD_PHASE_LABEL } from "@/features/admin/media/use-media-uploader";
 import { formatBytes } from "@/lib/media-utils";
-import {
-    AlertCircle,
-    Loader2,
-} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { AlertCircle, Check, Loader2 } from "lucide-react";
 import Image from "next/image";
 
 export interface MediaGridProps {
     items: MediaListItem[];
     buildMediaUrl: (storageKey?: string | null) => string | null;
     handleRetry: (item: FailedMediaItem) => void;
-    onOpenDetail: (item: SucceededMediaItem) => void;
+    onItemClick?: (item: SucceededMediaItem) => void;
+    selectionMode?: boolean;
+    selectedItemId?: number | null;
 }
 
 export function MediaGrid({
     items,
     buildMediaUrl,
     handleRetry,
-    onOpenDetail,
+    onItemClick,
+    selectionMode = false,
+    selectedItemId = null,
 }: MediaGridProps) {
     // グリッド表示用にカードを展開
     return (
-        <ul className="grid grid-cols-1 gap-4 px-4 py-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4">
+        <ul className="grid grid-cols-2 gap-4 px-4 py-4 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4">
             {items.map((item) => {
                 const key =
                     item.status === "succeeded"
@@ -40,7 +42,9 @@ export function MediaGrid({
                             item={item}
                             buildMediaUrl={buildMediaUrl}
                             handleRetry={handleRetry}
-                            onOpenDetail={onOpenDetail}
+                            onItemClick={onItemClick}
+                            selectionMode={selectionMode}
+                            selectedItemId={selectedItemId}
                         />
                     </li>
                 );
@@ -53,31 +57,45 @@ interface MediaGridCardProps {
     item: MediaListItem;
     buildMediaUrl: (storageKey?: string | null) => string | null;
     handleRetry: (item: FailedMediaItem) => void;
-    onOpenDetail: (item: SucceededMediaItem) => void;
+    onItemClick?: (item: SucceededMediaItem) => void;
+    selectionMode: boolean;
+    selectedItemId: number | null;
 }
 
 function MediaGridCard({
     item,
     buildMediaUrl,
     handleRetry,
-    onOpenDetail,
+    onItemClick,
+    selectionMode,
+    selectedItemId,
 }: MediaGridCardProps) {
     if (item.status === "succeeded") {
+        // 選択状態判定
+        const isSelected = selectionMode && selectedItemId === item.id;
+        // プレビュー用URL
         const mediaUrl = buildMediaUrl(item.storageKey);
         return (
             <div
-                role="button"
+                role={selectionMode ? "option" : "button"}
                 tabIndex={0}
-                onClick={() => onOpenDetail(item)}
+                onClick={() => onItemClick?.(item)}
                 onKeyDown={(event) => {
                     if (event.key === "Enter" || event.key === " ") {
                         event.preventDefault();
-                        onOpenDetail(item);
+                        onItemClick?.(item);
                     }
                 }}
-                className="flex h-full cursor-pointer flex-col overflow-hidden rounded-lg border bg-background outline-none transition hover:border-primary/50 hover:shadow focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
+                aria-selected={selectionMode ? isSelected : undefined}
+                className={cn(
+                    "flex h-full cursor-pointer flex-col overflow-hidden rounded-md border bg-background outline-none transition hover:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2",
+                    isSelected ? "border-primary" : ""
+                )}
             >
-                <div className="relative overflow-hidden bg-muted" style={{ aspectRatio: "16 / 9" }}>
+                <div
+                    className="relative overflow-hidden bg-muted"
+                    style={{ aspectRatio: "1 / 1" }}
+                >
                     {mediaUrl ? (
                         <Image
                             src={mediaUrl}
@@ -89,12 +107,11 @@ function MediaGridCard({
                     ) : (
                         <div className="absolute inset-0 bg-muted" />
                     )}
-                </div>
-                <div className="flex flex-1 flex-col gap-1 p-3 text-sm">
-                    <p className="truncate font-medium">{item.filename}</p>
-                    <p className="text-xs text-muted-foreground">
-                        {item.mime} ・ {formatBytes(item.bytes)}
-                    </p>
+                    {isSelected && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-primary/40 text-primary-foreground">
+                            <Check className="h-8 w-8" />
+                        </div>
+                    )}
                 </div>
             </div>
         );
@@ -137,7 +154,8 @@ function MediaGridCard({
                 <div className="space-y-1">
                     <p className="truncate font-medium">{item.filename}</p>
                     <p className="text-xs text-muted-foreground">
-                        {formatBytes(item.bytes)} ・ {UPLOAD_PHASE_LABEL[item.phase]}
+                        {formatBytes(item.bytes)} ・{" "}
+                        {UPLOAD_PHASE_LABEL[item.phase]}
                     </p>
                 </div>
                 <div className="mt-auto">
