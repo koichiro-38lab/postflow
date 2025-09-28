@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -36,6 +36,10 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover";
 import { TipTapEditor } from "@/components/TipTapEditor";
+import { MediaPickerDialog } from "@/components/admin/media/MediaPickerDialog";
+import type { SucceededMediaItem } from "@/features/admin/media/types";
+import Image from "next/image";
+import { buildMediaUrl } from "@/lib/media-url";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Save, ArrowLeft, Trash2, CalendarIcon } from "lucide-react";
@@ -66,17 +70,27 @@ interface PostFormProps {
     mode: "new" | "edit";
     postId?: number;
     initialData?: Partial<PostFormData>;
+    // 初期カバー画像ID（編集時に渡す）
+    initialCoverMediaId?: number | null;
+    // 初期カバー画像プレビューURL（編集時に渡す）
+    initialCoverPreviewUrl?: string | null;
 }
 
 const toUtcISOString = (date: Date) => date.toISOString();
 
-export default function PostForm({ mode, postId, initialData }: PostFormProps) {
+export default function PostForm({ mode, postId, initialData, initialCoverMediaId = null, initialCoverPreviewUrl = null, }: PostFormProps) {
     const router = useRouter();
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [categories, setCategories] = useState<CategorySummary[]>([]);
     const [isLoadingCategories, setIsLoadingCategories] = useState(true);
     const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+    // カバー画像ID（送信用）
+    const [coverMediaId, setCoverMediaId] = useState<number | null>(initialCoverMediaId);
+    // カバー画像プレビューURL
+    const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(initialCoverPreviewUrl);
+    // カバー画像のメディアピッカー表示状態
+    const [coverPickerOpen, setCoverPickerOpen] = useState(false);
 
     useEffect(() => {
         const loadCategories = async () => {
@@ -137,6 +151,7 @@ export default function PostForm({ mode, postId, initialData }: PostFormProps) {
                 contentJson: data.content,
                 categoryId: data.categoryId ? parseInt(data.categoryId) : null,
                 authorId: me.id,
+                coverMediaId: coverMediaId ?? null,
                 publishedAt:
                     data.status === "PUBLISHED" && !data.publishedAt
                         ? toUtcISOString(new Date())
@@ -177,6 +192,14 @@ export default function PostForm({ mode, postId, initialData }: PostFormProps) {
         }
     };
 
+    // カバー画像選択時の処理
+    const handleSelectCover = useCallback((item: SucceededMediaItem) => {
+        setCoverMediaId(item.id);
+        const src = item.publicUrl ?? buildMediaUrl(item.storageKey) ?? null;
+        setCoverPreviewUrl(src ?? null);
+        setCoverPickerOpen(false);
+    }, []);
+
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
             if ((event.ctrlKey || event.metaKey) && event.key === "s") {
@@ -211,6 +234,42 @@ export default function PostForm({ mode, postId, initialData }: PostFormProps) {
                 >
                     <Card>
                         <CardContent className="space-y-4 mt-4">
+                            <div className="space-y-2">
+                                <FormLabel>カバー画像</FormLabel>
+                                <div className="grid gap-3 md:grid-cols-[auto_auto] md:items-start">
+                                    <div className="relative overflow-hidden rounded-md border bg-muted w-[180px] h-[102px] md:w-[224px] md:h-[126px] justify-self-start">
+                                        {coverPreviewUrl ? (
+                                            <Image
+                                                src={coverPreviewUrl}
+                                                alt="カバー画像"
+                                                fill
+                                                sizes="(min-width: 1024px) 224px, 180px"
+                                                className="object-contain"
+                                            />
+                                        ) : (
+                                            <div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground">
+                                                カバー画像が未選択
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="flex gap-2 md:flex-col">
+                                        <Button type="button" variant="outline" onClick={() => setCoverPickerOpen(true)}>
+                                            メディアから選択
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            onClick={() => {
+                                                setCoverMediaId(null);
+                                                setCoverPreviewUrl(null);
+                                            }}
+                                            disabled={!coverMediaId}
+                                        >
+                                            クリア
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
                             <FormField
                                 control={form.control}
                                 name="title"
@@ -517,6 +576,11 @@ export default function PostForm({ mode, postId, initialData }: PostFormProps) {
                     </div>
                 </form>
             </Form>
+            <MediaPickerDialog
+                open={coverPickerOpen}
+                onOpenChange={setCoverPickerOpen}
+                onSelect={handleSelectCover}
+            />
         </div>
     );
 }

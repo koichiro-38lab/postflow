@@ -4,6 +4,8 @@ import PostForm, { PostFormData } from "../../PostForm";
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import api from "@/lib/api";
+import { fetchMediaDetail } from "@/lib/media-api";
+import { buildMediaUrl } from "@/lib/media-url";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
@@ -14,6 +16,8 @@ export default function EditPostPage() {
         useState<Partial<PostFormData> | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [initialCoverMediaId, setInitialCoverMediaId] = useState<number | null>(null);
+    const [initialCoverPreviewUrl, setInitialCoverPreviewUrl] = useState<string | null>(null);
 
     // 記事データを取得
     useEffect(() => {
@@ -33,6 +37,20 @@ export default function EditPostPage() {
                     status: post.status,
                     publishedAt: post.publishedAt || "",
                 });
+
+                if (post.coverMedia && post.coverMedia.id) {
+                    try {
+                        const detail = await fetchMediaDetail(post.coverMedia.id);
+                        const url = detail.publicUrl ?? buildMediaUrl(detail.storageKey);
+                        setInitialCoverMediaId(detail.id);
+                        setInitialCoverPreviewUrl(url ?? null);
+                    } catch (_) {
+                        // noop: カバー画像の詳細取得に失敗してもフォームは表示する
+                    }
+                } else {
+                    setInitialCoverMediaId(null);
+                    setInitialCoverPreviewUrl(null);
+                }
             } catch (e) {
                 setError(e instanceof Error ? e.message : String(e));
             } finally {
@@ -58,6 +76,8 @@ export default function EditPostPage() {
             mode="edit"
             postId={Number(params.id)}
             initialData={initialData}
+            initialCoverMediaId={initialCoverMediaId}
+            initialCoverPreviewUrl={initialCoverPreviewUrl}
         />
     );
 }
