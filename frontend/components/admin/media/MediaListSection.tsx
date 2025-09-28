@@ -27,7 +27,10 @@ export interface MediaListSectionProps {
     listContainerRef: RefObject<HTMLDivElement | null>;
     buildMediaUrl: (storageKey?: string | null) => string | null;
     handleRetry: (item: FailedMediaItem) => void;
-    onOpenDetail: (item: SucceededMediaItem) => void;
+    onOpenDetail?: (item: SucceededMediaItem) => void;
+    onSelectItem?: (item: SucceededMediaItem) => void;
+    selectionMode?: boolean;
+    selectedItemId?: number | null;
 }
 
 export function MediaListSection({
@@ -41,9 +44,14 @@ export function MediaListSection({
     buildMediaUrl,
     handleRetry,
     onOpenDetail,
+    onSelectItem,
+    selectionMode = false,
+    selectedItemId = null,
 }: MediaListSectionProps) {
     // 初回ロード後に一覧が空かどうかを判定
     const hasItems = items.length > 0;
+    // アイテムクリック時のハンドラ
+    const itemClickHandler = onSelectItem ?? onOpenDetail;
 
     return (
         <div className="rounded-md border bg-background/50">
@@ -54,9 +62,10 @@ export function MediaListSection({
             <div
                 ref={listContainerRef}
                 className={cn(
-                    "relative h-[420px] overflow-y-auto",
+                    "relative w-full overflow-y-auto overflow-x-hidden",
                     showInitialLoading ? "flex items-center justify-center" : ""
                 )}
+                style={{ height: "min(420px, 50vh)" }}
             >
                 {listError && (
                     <p className="mb-3 px-4 text-sm text-destructive">{listError}</p>
@@ -73,14 +82,18 @@ export function MediaListSection({
                         items={items}
                         buildMediaUrl={buildMediaUrl}
                         handleRetry={handleRetry}
-                        onOpenDetail={onOpenDetail}
+                        onItemClick={itemClickHandler}
+                        selectionMode={selectionMode}
+                        selectedItemId={selectedItemId}
                     />
                 ) : (
                     <MediaGrid
                         items={items}
                         buildMediaUrl={buildMediaUrl}
                         handleRetry={handleRetry}
-                        onOpenDetail={onOpenDetail}
+                        onItemClick={itemClickHandler}
+                        selectionMode={selectionMode}
+                        selectedItemId={selectedItemId}
                     />
                 )}
 

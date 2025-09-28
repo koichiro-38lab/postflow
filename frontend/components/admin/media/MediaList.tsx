@@ -9,10 +9,8 @@ import type {
 } from "@/features/admin/media/types";
 import { UPLOAD_PHASE_LABEL } from "@/features/admin/media/use-media-uploader";
 import { formatBytes } from "@/lib/media-utils";
-import {
-    AlertCircle,
-    Loader2,
-} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { AlertCircle, Check, Loader2 } from "lucide-react";
 
 const THUMBNAIL_WIDTH = 128;
 const THUMBNAIL_HEIGHT = 72;
@@ -21,30 +19,36 @@ export interface MediaListProps {
     items: MediaListItem[];
     buildMediaUrl: (storageKey?: string | null) => string | null;
     handleRetry: (item: FailedMediaItem) => void;
-    onOpenDetail: (item: SucceededMediaItem) => void;
+    onItemClick?: (item: SucceededMediaItem) => void;
+    selectionMode?: boolean;
+    selectedItemId?: number | null;
 }
 
 export function MediaList({
     items,
     buildMediaUrl,
     handleRetry,
-    onOpenDetail,
+    onItemClick,
+    selectionMode = false,
+    selectedItemId = null,
 }: MediaListProps) {
-    // アイテム毎に安定したキーを生成してリストを描画
+    // アイテムを安定したキーで描画
     return (
-        <ul>
+        <ul className="list-none p-0 m-0 w-full overflow-x-hidden">
             {items.map((item) => {
                 const key =
                     item.status === "succeeded"
                         ? `media-${item.id}`
                         : `upload-${item.id}`;
                 return (
-                    <li key={key}>
+                    <li key={key} className="w-full">
                         <MediaListRow
                             item={item}
                             buildMediaUrl={buildMediaUrl}
                             handleRetry={handleRetry}
-                            onOpenDetail={onOpenDetail}
+                            onItemClick={onItemClick}
+                            selectionMode={selectionMode}
+                            selectedItemId={selectedItemId}
                         />
                     </li>
                 );
@@ -57,31 +61,42 @@ interface MediaListRowProps {
     item: MediaListItem;
     buildMediaUrl: (storageKey?: string | null) => string | null;
     handleRetry: (item: FailedMediaItem) => void;
-    onOpenDetail: (item: SucceededMediaItem) => void;
+    onItemClick?: (item: SucceededMediaItem) => void;
+    selectionMode: boolean;
+    selectedItemId: number | null;
 }
 
 function MediaListRow({
     item,
     buildMediaUrl,
     handleRetry,
-    onOpenDetail,
+    onItemClick,
+    selectionMode,
+    selectedItemId,
 }: MediaListRowProps) {
     if (item.status === "succeeded") {
+        // 選択状態判定
+        const isSelected = selectionMode && selectedItemId === item.id;
+        // プレビュー用URL
         const mediaUrl = buildMediaUrl(item.storageKey);
         return (
             <div
-                role="button"
+                role={selectionMode ? "option" : "button"}
                 tabIndex={0}
-                onClick={() => onOpenDetail(item)}
+                onClick={() => onItemClick?.(item)}
                 onKeyDown={(event) => {
                     if (event.key === "Enter" || event.key === " ") {
                         event.preventDefault();
-                        onOpenDetail(item);
+                        onItemClick?.(item);
                     }
                 }}
-                className="flex cursor-pointer items-start gap-3 border-b p-3 outline-none transition hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
+                aria-selected={selectionMode ? isSelected : undefined}
+                className={cn(
+                    "w-full box-border flex cursor-pointer items-start gap-3 border-b p-3 outline-none transition hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2",
+                    isSelected ? "bg-primary/10" : ""
+                )}
             >
-                <div className="h-[72px] w-[128px] flex-none overflow-hidden rounded-md border bg-muted">
+                <div className="relative h-[72px] w-[128px] flex-none overflow-hidden rounded-md border bg-muted">
                     {mediaUrl ? (
                         <Image
                             src={mediaUrl}
@@ -92,6 +107,11 @@ function MediaListRow({
                         />
                     ) : (
                         <div className="h-full w-full bg-muted" />
+                    )}
+                    {isSelected && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-primary/40 text-primary-foreground">
+                            <Check className="h-6 w-6" />
+                        </div>
                     )}
                 </div>
                 <div className="min-w-0 flex-1 space-y-1">

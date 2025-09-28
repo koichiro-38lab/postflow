@@ -54,7 +54,6 @@ export function MediaDetailDialog({
     detailLoading,
     detailError,
     detailPublicUrl,
-    previewAspectRatio,
     downloadLoading,
     deleteLoading,
     deleteConfirmOpen,
@@ -86,9 +85,6 @@ export function MediaDetailDialog({
 
         return (
             <DialogFooter className="flex flex-wrap items-center justify-between gap-2">
-                <span className="text-xs text-muted-foreground">
-                    ID: {detailMedia.id}
-                </span>
                 <div className="flex flex-wrap gap-2">
                     <Button
                         type="button"
@@ -158,13 +154,10 @@ export function MediaDetailDialog({
                                 <div className="space-y-3">
                                     <div
                                         className={cn(
-                                            "relative mx-auto w-full max-w-[520px] overflow-hidden rounded-lg border bg-muted md:min-h-[320px] md:max-w-[560px]",
+                                            "relative mx-auto w-full max-w-[520px] overflow-hidden md:min-h-[320px] md:max-w-[560px]",
                                             detailLoading ? "opacity-80" : ""
                                         )}
-                                        style={{
-                                            aspectRatio: previewAspectRatio,
-                                            maxHeight: "65vh",
-                                        }}
+                                        style={{ aspectRatio: "4 / 3" }}
                                     >
                                         {detailPublicUrl ? (
                                             <Image
