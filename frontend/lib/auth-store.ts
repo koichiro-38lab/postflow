@@ -14,7 +14,7 @@ type DecodedToken = {
 
 type User = {
     id: number;
-    username: string;
+    email: string;
     roles: string[];
 };
 
@@ -91,9 +91,9 @@ const decodeUserFromAccess = (token: string): User | null => {
         typeof decoded.id === "number"
             ? decoded.id
             : parseInt(String(decoded.sub ?? 0), 10);
-    const username = decoded.username ?? String(decoded.sub ?? "");
+    const email = decoded.username ?? String(decoded.sub ?? "");
     const roles = decoded.roles ?? [];
-    return { id: Number.isFinite(id) ? id : 0, username, roles };
+    return { id: Number.isFinite(id) ? id : 0, email, roles };
 };
 
 let refreshPromise: Promise<string | null> | null = null;
@@ -112,16 +112,27 @@ export const useAuthStore = create<AuthState>()(
         login: async (email: string, password: string) => {
             set({ isLoading: true, error: null });
             try {
-                const res = await authClient.post("/api/auth/login", { email, password });
+                const res = await authClient.post("/api/auth/login", {
+                    email,
+                    password,
+                });
                 const { accessToken, refreshToken } = res.data as {
                     accessToken: string;
                     refreshToken: string;
                 };
                 if (accessToken) {
-                    setCookie(ACCESS_COOKIE, accessToken, ACCESS_COOKIE_TTL_DAYS);
+                    setCookie(
+                        ACCESS_COOKIE,
+                        accessToken,
+                        ACCESS_COOKIE_TTL_DAYS
+                    );
                 }
                 if (refreshToken) {
-                    setCookie(REFRESH_COOKIE, refreshToken, REFRESH_COOKIE_TTL_DAYS);
+                    setCookie(
+                        REFRESH_COOKIE,
+                        refreshToken,
+                        REFRESH_COOKIE_TTL_DAYS
+                    );
                 }
                 const user = decodeUserFromAccess(accessToken);
                 set({ accessToken, user, isLoading: false, error: null });
@@ -133,7 +144,8 @@ export const useAuthStore = create<AuthState>()(
                         data &&
                         typeof data === "object" &&
                         "message" in (data as Record<string, unknown>) &&
-                        typeof (data as Record<string, unknown>)["message"] === "string"
+                        typeof (data as Record<string, unknown>)["message"] ===
+                            "string"
                     ) {
                         message = (data as Record<string, string>)["message"];
                     }
@@ -169,16 +181,29 @@ export const useAuthStore = create<AuthState>()(
                     const res = await authClient.post("/api/auth/refresh", {
                         refreshToken,
                     });
-                    const { accessToken: newAccessToken, refreshToken: newRefresh } =
-                        res.data as { accessToken: string; refreshToken?: string };
+                    const {
+                        accessToken: newAccessToken,
+                        refreshToken: newRefresh,
+                    } = res.data as {
+                        accessToken: string;
+                        refreshToken?: string;
+                    };
 
                     if (newAccessToken) {
-                        setCookie(ACCESS_COOKIE, newAccessToken, ACCESS_COOKIE_TTL_DAYS);
+                        setCookie(
+                            ACCESS_COOKIE,
+                            newAccessToken,
+                            ACCESS_COOKIE_TTL_DAYS
+                        );
                         const user = decodeUserFromAccess(newAccessToken);
                         set({ accessToken: newAccessToken, user });
                     }
                     if (newRefresh) {
-                        setCookie(REFRESH_COOKIE, newRefresh, REFRESH_COOKIE_TTL_DAYS);
+                        setCookie(
+                            REFRESH_COOKIE,
+                            newRefresh,
+                            REFRESH_COOKIE_TTL_DAYS
+                        );
                     }
                     return newAccessToken ?? null;
                 } catch (err) {

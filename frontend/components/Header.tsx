@@ -37,7 +37,7 @@ export default function Header() {
                                 {user ? (
                                     <>
                                         <span className="text-sm text-muted-foreground">
-                                            ようこそ、{user.email}さん
+                                            {/* ようこそ、{user.email}さん */}
                                         </span>
                                         <Button
                                             onClick={handleLogout}

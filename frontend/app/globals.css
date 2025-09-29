@@ -43,8 +43,8 @@
         --accent-foreground: 210 40% 98%;
         --destructive: 0 62.8% 30.6%;
         --destructive-foreground: 210 40% 98%;
-        --border: 217.2 32.6% 20.5%;
-        --input: 217.2 32.6% 20.5%;
+        --border: 217.2 32.6% 25.5%;
+        --input: 217.2 32.6% 25.5%;
         --ring: 224.3 76.3% 94.1%;
     }
 }
@@ -55,6 +55,127 @@
     }
 
     body {
-        @apply bg-background text-foreground;
+        @apply bg-background text-foreground antialiased;
     }
+}
+
+@layer components {
+    .tiptap-editor {
+        @apply bg-background;
+    }
+
+    .tiptap-editor .ProseMirror {
+        transition: none;
+    }
+
+    .tiptap-editor .ProseMirror-focused {
+        @apply ring-2 ring-primary/40 ring-offset-2 ring-offset-background rounded-md outline-none;
+    }
+
+    .tiptap-editor .ProseMirror-selectednode img {
+        outline: 2px solid hsl(var(--primary));
+        outline-offset: 0px;
+    }
+
+    .tiptap-editor .ProseMirror p:last-child {
+        @apply mb-0;
+    }
+
+    .tiptap-editor .ProseMirror h1 {
+        @apply mt-8 text-3xl font-semibold leading-tight tracking-tight first:mt-0 mb-6;
+    }
+
+    .tiptap-editor .ProseMirror h2 {
+        @apply mt-6 text-2xl font-semibold leading-snug tracking-tight first:mt-0 border-b pb-1 mb-6;
+    }
+
+    .tiptap-editor .ProseMirror h3 {
+        @apply mt-5 text-xl font-semibold leading-snug tracking-tight first:mt-0 mb-4;
+    }
+
+    .tiptap-editor .ProseMirror p,
+    .tiptap-editor .ProseMirror ul,
+    .tiptap-editor .ProseMirror ol,
+    .tiptap-editor .ProseMirror blockquote {
+        @apply mb-4 last:mb-0;
+    }
+
+    .tiptap-editor .ProseMirror ul {
+        @apply list-disc space-y-2 pl-6;
+    }
+
+    .tiptap-editor .ProseMirror ol {
+        @apply list-decimal space-y-2 pl-6;
+    }
+
+    .tiptap-editor .ProseMirror blockquote {
+        @apply rounded-md border-l-4 border-primary/40 bg-primary/5 px-4 py-3 italic text-foreground;
+    }
+
+    .tiptap-editor .ProseMirror a {
+        @apply text-primary underline decoration-primary/40 underline-offset-4 hover:decoration-primary;
+    }
+
+    .tiptap-editor .ProseMirror code {
+        @apply rounded bg-muted px-1.5 py-0.5 font-mono text-sm text-foreground;
+    }
+
+    .tiptap-editor .ProseMirror pre {
+        @apply overflow-x-auto rounded-md bg-muted px-4 py-3;
+    }
+
+    .tiptap-editor .ProseMirror pre code {
+        @apply block bg-transparent p-0 text-sm text-foreground;
+    }
+
+    .tiptap-editor .ProseMirror table {
+        @apply w-full table-auto border-collapse overflow-hidden border;
+    }
+
+    .tiptap-editor .ProseMirror th,
+    .tiptap-editor .ProseMirror td {
+        @apply border px-3 py-2 text-left align-top;
+    }
+
+    .tiptap-editor .ProseMirror th {
+        @apply bg-muted font-semibold;
+    }
+
+    .tiptap-figure {
+        @apply my-6;
+    }
+
+    /* Media Image sizes */
+    .tiptap-figure.size-sm img {
+        width: 40%;
+        height: auto;
+    }
+
+    .tiptap-figure.size-md img {
+        width: 60%;
+        height: auto;
+    }
+
+    .tiptap-figure.size-lg img {
+        width: 100%;
+        height: auto;
+    }
+}
+
+/* media image alignment */
+.tiptap-figure.align-left img {
+    display: block;
+    margin-right: auto;
+    margin-left: 0;
+}
+
+.tiptap-figure.align-center img {
+    display: block;
+    margin: 0 auto;
+}
+
+.tiptap-figure.align-right img {
+    display: block;
+    margin-left: auto;
+    margin-right: 0;
 }

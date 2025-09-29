@@ -12,12 +12,20 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 // 編集ページコンポーネント
 export default function EditPostPage() {
     const params = useParams();
-    const [initialData, setInitialData] =
-        useState<Partial<PostFormData> | null>(null);
+    const [initialData, setInitialData] = useState<
+        | (Partial<PostFormData> & {
+              tags?: Array<{ id: number; name: string; slug: string }>;
+          })
+        | null
+    >(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [initialCoverMediaId, setInitialCoverMediaId] = useState<number | null>(null);
-    const [initialCoverPreviewUrl, setInitialCoverPreviewUrl] = useState<string | null>(null);
+    const [initialCoverMediaId, setInitialCoverMediaId] = useState<
+        number | null
+    >(null);
+    const [initialCoverPreviewUrl, setInitialCoverPreviewUrl] = useState<
+        string | null
+    >(null);
 
     // 記事データを取得
     useEffect(() => {
@@ -36,15 +44,20 @@ export default function EditPostPage() {
                     categoryId: post.category ? String(post.category.id) : "",
                     status: post.status,
                     publishedAt: post.publishedAt || "",
+                    tags: post.tags || [],
                 });
 
                 if (post.coverMedia && post.coverMedia.id) {
                     try {
-                        const detail = await fetchMediaDetail(post.coverMedia.id);
-                        const url = detail.publicUrl ?? buildMediaUrl(detail.storageKey);
+                        const detail = await fetchMediaDetail(
+                            post.coverMedia.id
+                        );
+                        const url =
+                            detail.publicUrl ??
+                            buildMediaUrl(detail.storageKey);
                         setInitialCoverMediaId(detail.id);
                         setInitialCoverPreviewUrl(url ?? null);
-                    } catch (_) {
+                    } catch {
                         // noop: カバー画像の詳細取得に失敗してもフォームは表示する
                     }
                 } else {
