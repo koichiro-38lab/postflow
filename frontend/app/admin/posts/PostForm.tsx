@@ -7,9 +7,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { isApiError } from "@/lib/api";
 import api from "@/lib/api";
-import { fetchCategories, CategorySummary } from "@/lib/post-api";
+import {
+    fetchCategories,
+    CategorySummary,
+    fetchTags,
+    TagSummary,
+} from "@/lib/post-api";
 import { cn } from "@/lib/utils";
-import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
     Form,
@@ -35,8 +39,19 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { TipTapEditor } from "@/components/TipTapEditor";
 import { MediaPickerDialog } from "@/components/admin/media/MediaPickerDialog";
+import { TagSelector } from "@/components/admin/TagSelector";
 import type { SucceededMediaItem } from "@/features/admin/media/types";
 import Image from "next/image";
 import { buildMediaUrl } from "@/lib/media-url";
@@ -44,6 +59,7 @@ import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Save, ArrowLeft, Trash2, CalendarIcon } from "lucide-react";
 import Link from "next/link";
+import { toast } from "sonner";
 
 const postSchema = z.object({
     title: z
@@ -62,6 +78,7 @@ const postSchema = z.object({
     categoryId: z.string().optional(),
     status: z.enum(["DRAFT", "PUBLISHED", "ARCHIVED"]),
     publishedAt: z.string().optional(),
+    tagIds: z.array(z.number()).optional(),
 });
 
 export type PostFormData = z.infer<typeof postSchema>;
@@ -69,7 +86,9 @@ export type PostFormData = z.infer<typeof postSchema>;
 interface PostFormProps {
     mode: "new" | "edit";
     postId?: number;
-    initialData?: Partial<PostFormData>;
+    initialData?: Partial<PostFormData> & {
+        tags?: Array<{ id: number; name: string; slug: string }>;
+    };
     // 初期カバー画像ID（編集時に渡す）
     initialCoverMediaId?: number | null;
     // 初期カバー画像プレビューURL（編集時に渡す）
@@ -78,17 +97,33 @@ interface PostFormProps {
 
 const toUtcISOString = (date: Date) => date.toISOString();
 
-export default function PostForm({ mode, postId, initialData, initialCoverMediaId = null, initialCoverPreviewUrl = null, }: PostFormProps) {
+export default function PostForm({
+    mode,
+    postId,
+    initialData,
+    initialCoverMediaId = null,
+    initialCoverPreviewUrl = null,
+}: PostFormProps) {
     const router = useRouter();
-    const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [categories, setCategories] = useState<CategorySummary[]>([]);
     const [isLoadingCategories, setIsLoadingCategories] = useState(true);
+    const [tags, setTags] = useState<TagSummary[]>([]);
+    const [isLoadingTags, setIsLoadingTags] = useState(true);
+    const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
     const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+    // 削除確認ダイアログの表示状態
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    // 削除処理中のローディング状態
+    const [isDeleting, setIsDeleting] = useState(false);
     // カバー画像ID（送信用）
-    const [coverMediaId, setCoverMediaId] = useState<number | null>(initialCoverMediaId);
+    const [coverMediaId, setCoverMediaId] = useState<number | null>(
+        initialCoverMediaId
+    );
     // カバー画像プレビューURL
-    const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(initialCoverPreviewUrl);
+    const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(
+        initialCoverPreviewUrl
+    );
     // カバー画像のメディアピッカー表示状態
     const [coverPickerOpen, setCoverPickerOpen] = useState(false);
 
@@ -101,11 +136,7 @@ export default function PostForm({ mode, postId, initialData, initialCoverMediaI
                 console.error("Failed to load categories:", error);
                 // 認証系はグローバルで扱う。ここでは一般エラーのみ表示
                 if (!(isApiError(error) && error.response?.status === 401)) {
-                    toast({
-                        title: "エラー",
-                        description: "カテゴリの読み込みに失敗しました。",
-                        variant: "destructive",
-                    });
+                    toast.error("カテゴリの読み込みに失敗しました。");
                 }
             } finally {
                 setIsLoadingCategories(false);
@@ -113,7 +144,26 @@ export default function PostForm({ mode, postId, initialData, initialCoverMediaI
         };
 
         loadCategories();
-    }, [toast]);
+    }, []);
+
+    useEffect(() => {
+        const loadTags = async () => {
+            try {
+                const fetchedTags = await fetchTags();
+                console.log("取得されたタグ:", fetchedTags);
+                setTags(fetchedTags);
+            } catch (error) {
+                console.error("Failed to load tags:", error);
+                if (!(isApiError(error) && error.response?.status === 401)) {
+                    toast.error("タグの読み込みに失敗しました。");
+                }
+            } finally {
+                setIsLoadingTags(false);
+            }
+        };
+
+        loadTags();
+    }, []);
 
     // statusがnull/undefined/空文字なら"DRAFT"をセット
     const safeInitialData = initialData
@@ -122,6 +172,20 @@ export default function PostForm({ mode, postId, initialData, initialCoverMediaI
               status: initialData.status != null ? initialData.status : "DRAFT",
           }
         : undefined;
+
+    // 初期タグIDを設定
+    useEffect(() => {
+        if (initialData?.tags && initialData.tags.length > 0) {
+            const tagIds = initialData.tags.map((tag) => tag.id);
+            console.log(
+                "初期データのタグ:",
+                initialData.tags,
+                "抽出されたタグID:",
+                tagIds
+            );
+            setSelectedTagIds(tagIds);
+        }
+    }, [initialData?.tags]);
     const form = useForm<PostFormData>({
         resolver: zodResolver(postSchema),
         defaultValues: safeInitialData || {
@@ -132,8 +196,15 @@ export default function PostForm({ mode, postId, initialData, initialCoverMediaI
             categoryId: "",
             status: "DRAFT",
             publishedAt: "",
+            tagIds: [],
         },
     });
+
+    // selectedTagIds が変わったら form の tagIds を更新
+    useEffect(() => {
+        console.log("selectedTagIds変更:", selectedTagIds);
+        form.setValue("tagIds", selectedTagIds);
+    }, [selectedTagIds, form]);
 
     const onSubmit = async (data: PostFormData) => {
         // トークンチェックはグローバル処理に任せる
@@ -152,11 +223,15 @@ export default function PostForm({ mode, postId, initialData, initialCoverMediaI
                 categoryId: data.categoryId ? parseInt(data.categoryId) : null,
                 authorId: me.id,
                 coverMediaId: coverMediaId ?? null,
+                tagIds: selectedTagIds,
                 publishedAt:
                     data.status === "PUBLISHED" && !data.publishedAt
                         ? toUtcISOString(new Date())
                         : data.publishedAt || null,
             };
+
+            console.log("送信データ:", requestData);
+            console.log("選択されたタグID:", selectedTagIds);
 
             let response;
             if (mode === "edit" && postId) {
@@ -172,23 +247,36 @@ export default function PostForm({ mode, postId, initialData, initialCoverMediaI
             if (mode === "new") {
                 router.push(`/admin/posts/${result.id}/edit`);
             } else {
-                toast({
-                    title: "成功",
-                    description: "保存しました",
-                });
+                toast.success("保存しました");
             }
         } catch (error) {
             console.error("投稿保存エラー:", error);
             // 認証はグローバル処理に任せる
             if (!(isApiError(error) && error.response?.status === 401)) {
-                toast({
-                    title: "エラー",
-                    description: "投稿の保存に失敗しました",
-                    variant: "destructive",
-                });
+                toast.error("投稿の保存に失敗しました");
             }
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    // 投稿削除処理
+    const handleDelete = async () => {
+        if (!postId) return;
+
+        setIsDeleting(true);
+        try {
+            await api.delete(`/api/admin/posts/${postId}`);
+            toast.success("投稿を削除しました");
+            router.push("/admin/posts");
+        } catch (error) {
+            console.error("投稿削除エラー:", error);
+            if (!(isApiError(error) && error.response?.status === 401)) {
+                toast.error("投稿の削除に失敗しました");
+            }
+        } finally {
+            setIsDeleting(false);
+            setIsDeleteDialogOpen(false);
         }
     };
 
@@ -233,76 +321,289 @@ export default function PostForm({ mode, postId, initialData, initialCoverMediaI
                     className="space-y-6"
                 >
                     <Card>
-                        <CardContent className="space-y-4 mt-4">
-                            <div className="space-y-2">
-                                <FormLabel>カバー画像</FormLabel>
-                                <div className="grid gap-3 md:grid-cols-[auto_auto] md:items-start">
-                                    <div className="relative overflow-hidden rounded-md border bg-muted w-[180px] h-[102px] md:w-[224px] md:h-[126px] justify-self-start">
-                                        {coverPreviewUrl ? (
-                                            <Image
-                                                src={coverPreviewUrl}
-                                                alt="カバー画像"
-                                                fill
-                                                sizes="(min-width: 1024px) 224px, 180px"
-                                                className="object-contain"
-                                            />
-                                        ) : (
-                                            <div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground">
-                                                カバー画像が未選択
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="flex gap-2 md:flex-col">
-                                        <Button type="button" variant="outline" onClick={() => setCoverPickerOpen(true)}>
-                                            メディアから選択
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            onClick={() => {
-                                                setCoverMediaId(null);
-                                                setCoverPreviewUrl(null);
-                                            }}
-                                            disabled={!coverMediaId}
-                                        >
-                                            クリア
-                                        </Button>
+                        <CardContent className="mt-4 grid grid-cols-1 md:grid-cols-[3fr_1fr] gap-6">
+                            {/* 左カラム: メインコンテンツ */}
+                            <div className="space-y-4">
+                                <FormField
+                                    control={form.control}
+                                    name="title"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>タイトル *</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    placeholder="記事のタイトルを入力"
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="content"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormControl>
+                                                <TipTapEditor
+                                                    content={field.value}
+                                                    onChange={field.onChange}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                            </div>
+                            {/* 右カラム: サイドバー */}
+                            <div className="space-y-4 sticky self-start top-0">
+                                <div className="space-y-2">
+                                    <FormLabel>カバー画像</FormLabel>
+                                    <div className="grid gap-3 md:grid-cols-[auto_auto] md:items-start">
+                                        <div className="relative overflow-hidden rounded-md border bg-muted w-[180px] h-[102px] md:w-[224px] md:h-[126px] justify-self-start">
+                                            {coverPreviewUrl ? (
+                                                <Image
+                                                    src={coverPreviewUrl}
+                                                    alt="カバー画像"
+                                                    fill
+                                                    sizes="(min-width: 1024px) 224px, 180px"
+                                                    className="object-contain"
+                                                />
+                                            ) : (
+                                                <div className="absolute inset-0 flex items-center justify-center text-xs text-muted-foreground">
+                                                    カバー画像が未選択
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="flex gap-2 md:flex-col">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                onClick={() =>
+                                                    setCoverPickerOpen(true)
+                                                }
+                                            >
+                                                メディアから選択
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                onClick={() => {
+                                                    setCoverMediaId(null);
+                                                    setCoverPreviewUrl(null);
+                                                }}
+                                                disabled={!coverMediaId}
+                                            >
+                                                クリア
+                                            </Button>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <FormField
-                                control={form.control}
-                                name="title"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>タイトル *</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                placeholder="記事のタイトルを入力"
-                                                {...field}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="slug"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>スラッグ *</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                placeholder="URLに使用される識別子"
-                                                {...field}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <FormField
+                                    control={form.control}
+                                    name="slug"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>スラッグ *</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    placeholder="URLに使用される識別子"
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="status"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>公開設定 *</FormLabel>
+                                            <Select
+                                                onValueChange={field.onChange}
+                                                value={field.value}
+                                            >
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    <SelectItem value="DRAFT">
+                                                        下書き
+                                                    </SelectItem>
+                                                    <SelectItem value="PUBLISHED">
+                                                        公開
+                                                    </SelectItem>
+                                                    <SelectItem value="ARCHIVED">
+                                                        アーカイブ
+                                                    </SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="publishedAt"
+                                    render={({ field }) => {
+                                        const selectedDate = field.value
+                                            ? new Date(field.value)
+                                            : undefined;
+
+                                        const handleDateSelect = (
+                                            date?: Date
+                                        ) => {
+                                            if (!date) {
+                                                field.onChange("");
+                                                return;
+                                            }
+                                            const base =
+                                                selectedDate ?? new Date();
+                                            const next = new Date(date);
+                                            next.setHours(
+                                                base.getHours(),
+                                                base.getMinutes(),
+                                                0,
+                                                0
+                                            );
+                                            field.onChange(
+                                                toUtcISOString(next)
+                                            );
+                                        };
+
+                                        const handleTimeChange = (
+                                            event: React.ChangeEvent<HTMLInputElement>
+                                        ) => {
+                                            const value = event.target.value;
+                                            if (!value) {
+                                                field.onChange("");
+                                                return;
+                                            }
+                                            const [hourStr, minuteStr] =
+                                                value.split(":");
+                                            const hours = Number(hourStr);
+                                            const minutes = Number(minuteStr);
+                                            if (
+                                                Number.isNaN(hours) ||
+                                                Number.isNaN(minutes)
+                                            ) {
+                                                return;
+                                            }
+                                            const base =
+                                                selectedDate ?? new Date();
+                                            const next = new Date(base);
+                                            next.setHours(hours, minutes, 0, 0);
+                                            field.onChange(
+                                                toUtcISOString(next)
+                                            );
+                                        };
+
+                                        return (
+                                            <FormItem className="flex flex-col">
+                                                <FormLabel>公開日時</FormLabel>
+                                                <Popover
+                                                    open={isDatePickerOpen}
+                                                    onOpenChange={
+                                                        setIsDatePickerOpen
+                                                    }
+                                                >
+                                                    <PopoverTrigger asChild>
+                                                        <Button
+                                                            variant="outline"
+                                                            className={cn(
+                                                                "justify-start text-left font-normal",
+                                                                !selectedDate &&
+                                                                    "text-muted-foreground"
+                                                            )}
+                                                        >
+                                                            <CalendarIcon className="mr-2 h-4 w-4" />
+                                                            {selectedDate
+                                                                ? format(
+                                                                      selectedDate,
+                                                                      "yyyy年MM月dd日 HH:mm"
+                                                                  )
+                                                                : "公開日時を選択"}
+                                                        </Button>
+                                                    </PopoverTrigger>
+                                                    <PopoverContent
+                                                        className="w-auto p-0"
+                                                        align="start"
+                                                    >
+                                                        <Calendar
+                                                            mode="single"
+                                                            selected={
+                                                                selectedDate
+                                                            }
+                                                            locale={ja}
+                                                            onSelect={
+                                                                handleDateSelect
+                                                            }
+                                                            initialFocus
+                                                        />
+                                                        <div className="border-t p-3 space-y-3">
+                                                            <div className="flex items-center gap-2">
+                                                                <Input
+                                                                    type="time"
+                                                                    value={
+                                                                        selectedDate
+                                                                            ? format(
+                                                                                  selectedDate,
+                                                                                  "HH:mm"
+                                                                              )
+                                                                            : ""
+                                                                    }
+                                                                    onChange={
+                                                                        handleTimeChange
+                                                                    }
+                                                                />
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="sm"
+                                                                    onClick={() => {
+                                                                        field.onChange(
+                                                                            ""
+                                                                        );
+                                                                        setIsDatePickerOpen(
+                                                                            false
+                                                                        );
+                                                                    }}
+                                                                >
+                                                                    クリア
+                                                                </Button>
+                                                            </div>
+                                                            <p className="text-xs text-muted-foreground">
+                                                                未入力の場合は保存時に現在時刻が設定されます。
+                                                            </p>
+                                                        </div>
+                                                    </PopoverContent>
+                                                </Popover>
+                                                <FormMessage />
+                                            </FormItem>
+                                        );
+                                    }}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="excerpt"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>概要</FormLabel>
+                                            <FormControl>
+                                                <Textarea
+                                                    placeholder="記事の概要を入力（オプション）"
+                                                    rows={3}
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
                                 <FormField
                                     control={form.control}
                                     name="categoryId"
@@ -348,200 +649,17 @@ export default function PostForm({ mode, postId, initialData, initialCoverMediaI
                                         </FormItem>
                                     )}
                                 />
-                                <FormField
-                                    control={form.control}
-                                    name="status"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>公開設定 *</FormLabel>
-                                            <Select
-                                                onValueChange={field.onChange}
-                                                value={field.value}
-                                            >
-                                                <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    <SelectItem value="DRAFT">
-                                                        下書き
-                                                    </SelectItem>
-                                                    <SelectItem value="PUBLISHED">
-                                                        公開
-                                                    </SelectItem>
-                                                    <SelectItem value="ARCHIVED">
-                                                        アーカイブ
-                                                    </SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
+                                <TagSelector
+                                    tags={tags}
+                                    selectedTagIds={selectedTagIds}
+                                    onChange={setSelectedTagIds}
+                                    onTagCreated={(newTag) => {
+                                        // 新しく作成されたタグをtagsリストに追加
+                                        setTags((prev) => [...prev, newTag]);
+                                    }}
+                                    isLoading={isLoadingTags}
                                 />
                             </div>
-                            <FormField
-                                control={form.control}
-                                name="publishedAt"
-                                render={({ field }) => {
-                                    const selectedDate = field.value
-                                        ? new Date(field.value)
-                                        : undefined;
-
-                                    const handleDateSelect = (date?: Date) => {
-                                        if (!date) {
-                                            field.onChange("");
-                                            return;
-                                        }
-                                        const base = selectedDate ?? new Date();
-                                        const next = new Date(date);
-                                        next.setHours(
-                                            base.getHours(),
-                                            base.getMinutes(),
-                                            0,
-                                            0
-                                        );
-                                        field.onChange(toUtcISOString(next));
-                                    };
-
-                                    const handleTimeChange = (
-                                        event: React.ChangeEvent<HTMLInputElement>
-                                    ) => {
-                                        const value = event.target.value;
-                                        if (!value) {
-                                            field.onChange("");
-                                            return;
-                                        }
-                                        const [hourStr, minuteStr] =
-                                            value.split(":");
-                                        const hours = Number(hourStr);
-                                        const minutes = Number(minuteStr);
-                                        if (
-                                            Number.isNaN(hours) ||
-                                            Number.isNaN(minutes)
-                                        ) {
-                                            return;
-                                        }
-                                        const base = selectedDate ?? new Date();
-                                        const next = new Date(base);
-                                        next.setHours(hours, minutes, 0, 0);
-                                        field.onChange(toUtcISOString(next));
-                                    };
-
-                                    return (
-                                        <FormItem className="flex flex-col">
-                                            <FormLabel>公開日時</FormLabel>
-                                            <Popover
-                                                open={isDatePickerOpen}
-                                                onOpenChange={
-                                                    setIsDatePickerOpen
-                                                }
-                                            >
-                                                <PopoverTrigger asChild>
-                                                    <Button
-                                                        variant="outline"
-                                                        className={cn(
-                                                            "justify-start text-left font-normal",
-                                                            !selectedDate &&
-                                                                "text-muted-foreground"
-                                                        )}
-                                                    >
-                                                        <CalendarIcon className="mr-2 h-4 w-4" />
-                                                        {selectedDate
-                                                            ? format(
-                                                                  selectedDate,
-                                                                  "yyyy年MM月dd日 HH:mm"
-                                                              )
-                                                            : "公開日時を選択"}
-                                                    </Button>
-                                                </PopoverTrigger>
-                                                <PopoverContent
-                                                    className="w-auto p-0"
-                                                    align="start"
-                                                >
-                                                    <Calendar
-                                                        mode="single"
-                                                        selected={selectedDate}
-                                                        locale={ja}
-                                                        onSelect={
-                                                            handleDateSelect
-                                                        }
-                                                        initialFocus
-                                                    />
-                                                    <div className="border-t p-3 space-y-3">
-                                                        <div className="flex items-center gap-2">
-                                                            <Input
-                                                                type="time"
-                                                                value={
-                                                                    selectedDate
-                                                                        ? format(
-                                                                              selectedDate,
-                                                                              "HH:mm"
-                                                                          )
-                                                                        : ""
-                                                                }
-                                                                onChange={
-                                                                    handleTimeChange
-                                                                }
-                                                            />
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                onClick={() => {
-                                                                    field.onChange(
-                                                                        ""
-                                                                    );
-                                                                    setIsDatePickerOpen(
-                                                                        false
-                                                                    );
-                                                                }}
-                                                            >
-                                                                クリア
-                                                            </Button>
-                                                        </div>
-                                                        <p className="text-xs text-muted-foreground">
-                                                            未入力の場合は保存時に現在時刻が設定されます。
-                                                        </p>
-                                                    </div>
-                                                </PopoverContent>
-                                            </Popover>
-                                            <FormMessage />
-                                        </FormItem>
-                                    );
-                                }}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="excerpt"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>概要</FormLabel>
-                                        <FormControl>
-                                            <Textarea
-                                                placeholder="記事の概要を入力（オプション）"
-                                                rows={3}
-                                                {...field}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="content"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormControl>
-                                            <TipTapEditor
-                                                content={field.value}
-                                                onChange={field.onChange}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
                         </CardContent>
                     </Card>
                     <div className="flex justify-end space-x-2">
@@ -550,16 +668,11 @@ export default function PostForm({ mode, postId, initialData, initialCoverMediaI
                                 type="button"
                                 variant="destructive"
                                 className="mr-auto"
-                                disabled={isSubmitting}
-                                onClick={() =>
-                                    toast({
-                                        title: "情報",
-                                        description: "削除機能は未実装です",
-                                    })
-                                }
+                                disabled={isSubmitting || isDeleting}
+                                onClick={() => setIsDeleteDialogOpen(true)}
                             >
-                                <Trash2 className="h-4 w-1 mr-1" />
-                                削除
+                                <Trash2 className="h-4 w-4 mr-1" />
+                                {isDeleting ? "削除中..." : "削除"}
                             </Button>
                         )}
                         <Button
@@ -576,11 +689,42 @@ export default function PostForm({ mode, postId, initialData, initialCoverMediaI
                     </div>
                 </form>
             </Form>
+
+            {/* メディアピッカーダイアログ */}
             <MediaPickerDialog
                 open={coverPickerOpen}
                 onOpenChange={setCoverPickerOpen}
                 onSelect={handleSelectCover}
             />
+
+            {/* 削除確認ダイアログ */}
+            <AlertDialog
+                open={isDeleteDialogOpen}
+                onOpenChange={setIsDeleteDialogOpen}
+            >
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>
+                            投稿を削除しますか？
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            この操作は元に戻すことができません。投稿と関連するデータが完全に削除されます。
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={isDeleting}>
+                            キャンセル
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleDelete}
+                            disabled={isDeleting}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        >
+                            {isDeleting ? "削除中..." : "削除"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

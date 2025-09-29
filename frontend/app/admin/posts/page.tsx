@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -51,7 +51,7 @@ import {
 type SortField = "title" | "slug" | "publishedAt" | "category" | "status";
 type SortDirection = "asc" | "desc";
 
-export default function AdminPostsPage() {
+function AdminPostsPageContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -597,5 +597,13 @@ export default function AdminPostsPage() {
                 </Pagination>
             )}
         </div>
+    );
+}
+
+export default function AdminPostsPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <AdminPostsPageContent />
+        </Suspense>
     );
 }
