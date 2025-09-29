@@ -8,6 +8,12 @@ export interface CategorySummary {
     slug: string;
 }
 
+export interface TagSummary {
+    id: number;
+    name: string;
+    slug: string;
+}
+
 export interface Post {
     id: string;
     title: string;
@@ -54,9 +60,24 @@ export async function fetchPosts(
     return res.data;
 }
 
-export async function fetchCategories(
-    _accessToken?: string
-): Promise<CategorySummary[]> {
+export async function fetchCategories(): Promise<CategorySummary[]> {
     const res = await api.get(`${API_BASE_URL}/api/admin/categories`);
+    return res.data;
+}
+
+export async function fetchTags(): Promise<TagSummary[]> {
+    const res = await api.get(`${API_BASE_URL}/api/admin/tags`);
+    return res.data;
+}
+
+export interface TagCreateRequest {
+    name: string;
+    slug: string;
+}
+
+export async function createTag(
+    request: TagCreateRequest
+): Promise<TagSummary> {
+    const res = await api.post(`${API_BASE_URL}/api/admin/tags`, request);
     return res.data;
 }
