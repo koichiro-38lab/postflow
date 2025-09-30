@@ -1,7 +1,7 @@
 "use client";
 
 import { useEditor, EditorContent } from "@tiptap/react";
-import { Fragment, useState, useEffect } from "react";
+import { useMemo, useCallback } from "react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import { Table } from "@tiptap/extension-table";
@@ -12,22 +12,19 @@ import TableCell from "@tiptap/extension-table-cell";
 import { cn } from "@/lib/utils";
 import { MediaPickerDialog } from "@/components/admin/media/MediaPickerDialog";
 import type { SucceededMediaItem } from "@/features/admin/media/types";
-import { buildMediaUrl } from "@/lib/media-url";
 
 import MediaImage from "@/lib/tiptap/extensions/media-image";
-import { NodeSelection, Selection, TextSelection } from "@tiptap/pm/state";
 
-import {
-    ContextMenu,
-    ContextMenuContent,
-    ContextMenuTrigger,
-} from "@/components/ui/context-menu";
-import { TipTapTableContextMenu } from "@/components/admin/tiptap/TipTapTableContextMenu";
-import { TipTapImageContextMenu } from "@/components/admin/tiptap/TipTapImageContextMenu";
 import { TipTapToolbar } from "@/components/admin/tiptap/TipTapToolbar";
 import { TipTapLinkDialog } from "@/components/admin/tiptap/TipTapLinkDialog";
 import { TipTapAltTextDialog } from "@/components/admin/tiptap/TipTapAltTextDialog";
-import { TipTapLinkTooltip } from "@/components/admin/tiptap/TipTapLinkTooltip";
+import { TipTapContextMenu } from "@/components/admin/tiptap/TipTapContextMenu";
+import { useTipTapState } from "@/features/admin/tiptap/hooks/use-tipTap-state";
+import {
+    handleMediaSelect,
+    handleAddLink,
+    handleAddTable,
+} from "@/features/admin/tiptap/utils/tiptap-handlers";
 
 interface TipTapEditorProps {
     content: string;
@@ -35,44 +32,42 @@ interface TipTapEditorProps {
     className?: string;
 }
 
-type SelectionJSON = ReturnType<Selection["toJSON"]>;
-
-interface ContextMenuState {
-    type: "table" | "image";
-    x: number;
-    y: number;
-    selection: SelectionJSON;
-}
-
 export function TipTapEditor({
     content,
     onChange,
     className,
 }: TipTapEditorProps) {
-    const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
-    // 置換モードのフラグ
-    const [isReplaceMode, setIsReplaceMode] = useState(false);
-    const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(
-        null
-    );
-    const [altEditOpen, setAltEditOpen] = useState(false);
-    const [currentAlt, setCurrentAlt] = useState("");
-    const [linkEditOpen, setLinkEditOpen] = useState(false);
-    const [linkUrl, setLinkUrl] = useState("");
-    const [linkText, setLinkText] = useState("");
-    const [linkTarget, setLinkTarget] = useState(false);
-    const [linkNofollow, setLinkNofollow] = useState(false);
-    const [isImageLinkMode, setIsImageLinkMode] = useState(false);
-    const [linkTooltip, setLinkTooltip] = useState<{
-        visible: boolean;
-        href: string;
-        x: number;
-        y: number;
-        type: "text" | "image";
-    } | null>(null);
+    // 状態管理をカスタムフックに委譲
+    const {
+        mediaPickerOpen,
+        setMediaPickerOpen,
+        isReplaceMode,
+        setIsReplaceMode,
+        contextMenu,
+        setContextMenu,
+        altEditOpen,
+        setAltEditOpen,
+        currentAlt,
+        setCurrentAlt,
+        linkEditOpen,
+        setLinkEditOpen,
+        linkUrl,
+        setLinkUrl,
+        linkText,
+        setLinkText,
+        linkTarget,
+        setLinkTarget,
+        linkNofollow,
+        setLinkNofollow,
+        isImageLinkMode,
+        setIsImageLinkMode,
+        linkTooltip,
+        setLinkTooltip,
+    } = useTipTapState();
 
-    const editor = useEditor({
-        extensions: [
+    // エディタ設定をメモ化
+    const extensions = useMemo(
+        () => [
             StarterKit,
             MediaImage.configure({
                 allowBase64: false,
@@ -90,6 +85,11 @@ export function TipTapEditor({
             TableHeader,
             TableCell,
         ],
+        []
+    );
+
+    const editor = useEditor({
+        extensions,
         content: content
             ? typeof content === "string" && content.startsWith("{")
                 ? JSON.parse(content)
@@ -101,7 +101,6 @@ export function TipTapEditor({
         onSelectionUpdate: ({ editor }) => {
             const isLinkActive = editor.isActive("link");
 
-            // テキストリンクツールチップの処理（画像リンクは表示しない）
             if (isLinkActive) {
                 const linkAttrs = editor.getAttributes("link");
                 const { from } = editor.state.selection;
@@ -129,7 +128,6 @@ export function TipTapEditor({
                 const { schema } = state;
                 const link = schema.marks.link;
 
-                // テキストリンクの場合のみクリックを無効化
                 if (link && event.target) {
                     const mark =
                         state.storedMarks?.find((m) => m.type === link) ||
@@ -142,15 +140,20 @@ export function TipTapEditor({
                         return true;
                     }
                 }
-
-                // 画像リンクの場合は通常のクリック処理を行う（選択状態にする）
                 return false;
             },
             handleKeyDown: (view, event) => {
                 // Ctrl+K または Cmd+K でリンク作成
                 if ((event.ctrlKey || event.metaKey) && event.key === "k") {
                     event.preventDefault();
-                    addLink();
+                    handleAddLink(editor, {
+                        setLinkUrl,
+                        setLinkText,
+                        setLinkTarget,
+                        setLinkNofollow,
+                        setIsImageLinkMode,
+                        setLinkEditOpen,
+                    });
                     return true;
                 }
                 return false;
@@ -158,117 +161,42 @@ export function TipTapEditor({
         },
     });
 
-    const addLink = () => {
-        if (!editor) return;
+    // メディア選択時の処理
+    const onMediaSelect = useCallback(
+        (item: SucceededMediaItem) => {
+            handleMediaSelect(
+                item,
+                editor,
+                isReplaceMode,
+                setIsReplaceMode,
+                setMediaPickerOpen
+            );
+        },
+        [editor, isReplaceMode, setIsReplaceMode, setMediaPickerOpen]
+    ); // テーブル追加時の処理
+    const onAddTable = useCallback(() => {
+        handleAddTable(editor);
+    }, [editor]);
 
-        const isLinkActive = editor.isActive("link");
-        const isImageActive = editor.isActive("mediaImage");
-        const selectedText = editor.state.doc.textBetween(
-            editor.state.selection.from,
-            editor.state.selection.to
-        );
-
-        if (isLinkActive) {
-            // 既存リンクの編集
-            const linkAttrs = editor.getAttributes("link");
-            setLinkUrl(linkAttrs.href || "");
-            setLinkText(selectedText);
-            setLinkTarget(linkAttrs.target === "_blank");
-            setLinkNofollow(linkAttrs.rel === "nofollow");
-        } else if (isImageActive) {
-            // 画像へのリンク設定
-            const imageAttrs = editor.getAttributes("mediaImage");
-            const existingLink = imageAttrs.link;
-            if (existingLink && existingLink.href) {
-                // 画像にリンクが既にある場合
-                setLinkUrl(existingLink.href);
-                setLinkText("");
-                setLinkTarget(existingLink.target === "_blank");
-                setLinkNofollow(existingLink.rel === "nofollow");
-            } else {
-                // 新規リンク設定
-                setLinkUrl("");
-                setLinkText("");
-                setLinkTarget(false);
-                setLinkNofollow(false);
-            }
-        } else {
-            // 新規リンクの挿入
-            setLinkText(selectedText);
-            setLinkUrl("");
-            setLinkTarget(false);
-            setLinkNofollow(false);
-        }
-
-        setIsImageLinkMode(isImageActive);
-        setLinkEditOpen(true);
-    };
-
-    const addTable = () => {
-        if (!editor) return;
-        editor
-            .chain()
-            .focus()
-            .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
-            .run();
-    };
-
-    // メディア選択時のハンドラ
-    const handleMediaSelect = (item: SucceededMediaItem) => {
-        // メディアURLを構築
-        const mediaUrl = buildMediaUrl(item.storageKey);
-
-        if (isReplaceMode) {
-            // 置換モードの場合、既存の画像を更新
-            if (editor) {
-                editor
-                    .chain()
-                    .focus()
-                    .updateAttributes("mediaImage", {
-                        src: mediaUrl,
-                        alt: item.altText || "",
-                    })
-                    .run();
-            }
-            setIsReplaceMode(false);
-        } else {
-            // 新規挿入の場合
-            if (editor && mediaUrl) {
-                // MediaImage拡張のinsertContentを使用
-                editor
-                    .chain()
-                    .focus()
-                    .insertContent({
-                        type: "mediaImage",
-                        attrs: {
-                            src: mediaUrl,
-                            alt: item.altText || "",
-                            align: "center",
-                            size: "lg",
-                            link: null,
-                            caption: null,
-                        },
-                    })
-                    .run();
-            }
-        }
-        setMediaPickerOpen(false);
-    };
-
-    useEffect(() => {
-        if (!contextMenu) return;
-        const close = () => setContextMenu(null);
-        const onKey = (event: KeyboardEvent) => {
-            if (event.key === "Escape") setContextMenu(null);
-        };
-        window.addEventListener("click", close);
-        window.addEventListener("keydown", onKey);
-        return () => {
-            window.removeEventListener("click", close);
-            window.removeEventListener("keydown", onKey);
-        };
-    }, [contextMenu]);
-
+    // リンク追加時の処理
+    const onAddLink = useCallback(() => {
+        handleAddLink(editor, {
+            setLinkUrl,
+            setLinkText,
+            setLinkTarget,
+            setLinkNofollow,
+            setIsImageLinkMode,
+            setLinkEditOpen,
+        });
+    }, [
+        editor,
+        setLinkUrl,
+        setLinkText,
+        setLinkTarget,
+        setLinkNofollow,
+        setIsImageLinkMode,
+        setLinkEditOpen,
+    ]);
     return (
         <>
             <div className={cn("border rounded-md", className)}>
@@ -277,237 +205,36 @@ export function TipTapEditor({
                         <TipTapToolbar
                             editor={editor}
                             onImageClick={() => setMediaPickerOpen(true)}
-                            onLinkClick={addLink}
-                            onTableClick={addTable}
+                            onLinkClick={onAddLink}
+                            onTableClick={onAddTable}
                         />
                     </div>
                 )}
 
-                <ContextMenu>
-                    <ContextMenuTrigger asChild>
-                        <div
-                            className="relative"
-                            onContextMenu={(event) => {
-                                if (!editor) return;
-                                const target =
-                                    event.target as HTMLElement | null;
-                                if (!target) {
-                                    setContextMenu(null);
-                                    return;
-                                }
-
-                                const figure = target.closest(
-                                    "figure.tiptap-figure"
-                                );
-                                if (figure) {
-                                    // 画像の選択状態を設定
-                                    const pos = editor.view.posAtDOM(figure, 0);
-                                    if (typeof pos === "number") {
-                                        const selection = NodeSelection.create(
-                                            editor.state.doc,
-                                            pos
-                                        );
-                                        editor.view.dispatch(
-                                            editor.state.tr.setSelection(
-                                                selection
-                                            )
-                                        );
-                                        editor.view.focus();
-                                    }
-                                    setContextMenu({
-                                        type: "image",
-                                        x: event.clientX,
-                                        y: event.clientY,
-                                        selection:
-                                            editor.state.selection.toJSON(),
-                                    });
-                                    return;
-                                }
-
-                                const cell = target.closest("td, th");
-                                if (cell) {
-                                    // テーブルセルの位置にフォーカス
-                                    const position = editor.view.posAtCoords({
-                                        left: event.clientX,
-                                        top: event.clientY,
-                                    });
-                                    if (position) {
-                                        const selection = TextSelection.near(
-                                            editor.state.doc.resolve(
-                                                position.pos
-                                            )
-                                        );
-                                        editor.view.dispatch(
-                                            editor.state.tr.setSelection(
-                                                selection
-                                            )
-                                        );
-                                        editor.view.focus();
-                                    }
-                                    setContextMenu({
-                                        type: "table",
-                                        x: event.clientX,
-                                        y: event.clientY,
-                                        selection:
-                                            editor.state.selection.toJSON(),
-                                    });
-                                    return;
-                                }
-
-                                setContextMenu(null);
-                            }}
-                        >
-                            <EditorContent
-                                editor={editor}
-                                className="tiptap-editor"
-                            />
-                            {linkTooltip && linkTooltip.visible && (
-                                <TipTapLinkTooltip
-                                    visible={true}
-                                    x={linkTooltip.x}
-                                    y={linkTooltip.y}
-                                    href={linkTooltip.href}
-                                    type={linkTooltip.type}
-                                    onEdit={() => {
-                                        // 編集モードに入る
-                                        if (linkTooltip.type === "text") {
-                                            const selectedText =
-                                                editor?.state.doc.textBetween(
-                                                    editor.state.selection.from,
-                                                    editor.state.selection.to
-                                                );
-                                            const linkAttrs =
-                                                editor?.getAttributes("link");
-                                            setLinkUrl(linkAttrs?.href || "");
-                                            setLinkText(selectedText || "");
-                                            setLinkTarget(
-                                                linkAttrs?.target === "_blank"
-                                            );
-                                            setLinkNofollow(
-                                                linkAttrs?.rel === "nofollow"
-                                            );
-                                            setIsImageLinkMode(false);
-                                        } else {
-                                            const imageAttrs =
-                                                editor?.getAttributes(
-                                                    "mediaImage"
-                                                );
-                                            const existingLink =
-                                                imageAttrs?.link;
-                                            setLinkUrl(
-                                                existingLink?.href || ""
-                                            );
-                                            setLinkText("");
-                                            setLinkTarget(
-                                                existingLink?.target ===
-                                                    "_blank"
-                                            );
-                                            setLinkNofollow(
-                                                existingLink?.rel === "nofollow"
-                                            );
-                                            setIsImageLinkMode(true);
-                                        }
-                                        setLinkEditOpen(true);
-                                        setLinkTooltip(null);
-                                    }}
-                                    onRemove={() => {
-                                        if (editor) {
-                                            const isLinkActive =
-                                                editor.isActive("link");
-                                            const isImageLink =
-                                                editor.state
-                                                    .selection instanceof
-                                                    NodeSelection &&
-                                                editor.state.selection.node.type
-                                                    .name === "mediaImage" &&
-                                                editor.state.selection.node
-                                                    .attrs.link?.href;
-
-                                            if (isLinkActive) {
-                                                editor
-                                                    .chain()
-                                                    .focus()
-                                                    .extendMarkRange("link")
-                                                    .unsetLink()
-                                                    .run();
-                                            } else if (isImageLink) {
-                                                editor
-                                                    .chain()
-                                                    .focus()
-                                                    .updateAttributes(
-                                                        "mediaImage",
-                                                        {
-                                                            link: null,
-                                                        }
-                                                    )
-                                                    .run();
-                                            }
-                                        }
-                                        setLinkTooltip(null);
-                                    }}
-                                    onOpenLink={(href) =>
-                                        window.open(href, "_blank")
-                                    }
-                                />
-                            )}
-                        </div>
-                    </ContextMenuTrigger>
-                    {/* contextMenu が null でない場合のみ描画 */}
-                    {contextMenu && (
-                        <ContextMenuContent>
-                            {contextMenu.type === "table" ? (
-                                <TipTapTableContextMenu editor={editor} />
-                            ) : contextMenu.type === "image" ? (
-                                <TipTapImageContextMenu
-                                    editor={editor}
-                                    onEditAlt={() => {
-                                        const currentAltValue =
-                                            editor?.getAttributes("mediaImage")
-                                                .alt || "";
-                                        setCurrentAlt(currentAltValue);
-                                        setAltEditOpen(true);
-                                    }}
-                                    onEditLink={() => {
-                                        const imageAttrs =
-                                            editor?.getAttributes("mediaImage");
-                                        const hasLink =
-                                            imageAttrs?.link &&
-                                            imageAttrs.link.href;
-
-                                        if (hasLink) {
-                                            const existingLink =
-                                                imageAttrs.link;
-                                            setLinkUrl(existingLink.href);
-                                            setLinkTarget(
-                                                existingLink.target === "_blank"
-                                            );
-                                            setLinkNofollow(
-                                                existingLink.rel === "nofollow"
-                                            );
-                                        } else {
-                                            setLinkUrl("");
-                                            setLinkTarget(false);
-                                            setLinkNofollow(false);
-                                        }
-                                        setLinkText("");
-                                        setIsImageLinkMode(true);
-                                        setLinkEditOpen(true);
-                                    }}
-                                    onReplace={() => {
-                                        // 置換モードでメディアピッカーを開く
-                                        setIsReplaceMode(true);
-                                        setMediaPickerOpen(true);
-                                    }}
-                                />
-                            ) : null}
-                        </ContextMenuContent>
-                    )}
-                </ContextMenu>
+                <TipTapContextMenu
+                    editor={editor}
+                    contextMenu={contextMenu}
+                    setContextMenu={setContextMenu}
+                    setAltEditOpen={setAltEditOpen}
+                    setCurrentAlt={setCurrentAlt}
+                    setLinkUrl={setLinkUrl}
+                    setLinkText={setLinkText}
+                    setLinkTarget={setLinkTarget}
+                    setLinkNofollow={setLinkNofollow}
+                    setIsImageLinkMode={setIsImageLinkMode}
+                    setLinkEditOpen={setLinkEditOpen}
+                    setIsReplaceMode={setIsReplaceMode}
+                    setMediaPickerOpen={setMediaPickerOpen}
+                    linkTooltip={linkTooltip}
+                    setLinkTooltip={setLinkTooltip}
+                >
+                    <EditorContent editor={editor} className="tiptap-editor" />
+                </TipTapContextMenu>
             </div>
             <MediaPickerDialog
                 open={mediaPickerOpen}
                 onOpenChange={setMediaPickerOpen}
-                onSelect={handleMediaSelect}
+                onSelect={onMediaSelect}
             />
             <TipTapAltTextDialog
                 open={altEditOpen}
