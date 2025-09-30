@@ -19,8 +19,8 @@ import type {
     FailedMediaItem,
     MediaListItem,
     UploadingMediaItem,
-} from "./types";
-import { UPLOAD_PHASE_LABEL } from "./types";
+} from "../types";
+import { UPLOAD_PHASE_LABEL } from "../types";
 
 interface UseMediaUploaderOptions {
     setItems: Dispatch<SetStateAction<MediaListItem[]>>;
@@ -173,7 +173,16 @@ export function useMediaUploader({
                 });
             }
         },
-        [register, requestUpload, setHasMore, setItems, setListError, toast, updateTransientItem, uploadObject]
+        [
+            register,
+            requestUpload,
+            setHasMore,
+            setItems,
+            setListError,
+            toast,
+            updateTransientItem,
+            uploadObject,
+        ]
     );
 
     // アップロード失敗したアイテムを再度キューに戻す
@@ -208,7 +217,9 @@ export function useMediaUploader({
         (files: File[]) => {
             files.forEach(async (file) => {
                 const id = generateUploadId();
-                const { width, height } = await getOptionalImageDimensions(file);
+                const { width, height } = await getOptionalImageDimensions(
+                    file
+                );
                 const entry: UploadingMediaItem = {
                     id,
                     status: "uploading",

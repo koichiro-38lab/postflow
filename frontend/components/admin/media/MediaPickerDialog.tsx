@@ -14,8 +14,8 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import type { SucceededMediaItem } from "@/features/admin/media/types";
-import { useMediaLibrary } from "@/features/admin/media/use-media-library";
-import { useMediaUploader } from "@/features/admin/media/use-media-uploader";
+import { useMediaLibrary } from "@/features/admin/media/hooks/use-media-library";
+import { useMediaUploader } from "@/features/admin/media/hooks/use-media-uploader";
 import { useToast } from "@/hooks/use-toast";
 import { buildMediaUrl } from "@/lib/media-url";
 import { formatBytes, formatDateTime } from "@/lib/media-utils";
