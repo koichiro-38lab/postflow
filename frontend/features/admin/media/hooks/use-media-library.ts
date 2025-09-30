@@ -13,7 +13,7 @@ import type {
     SucceededMediaItem,
     UploadingMediaItem,
     ViewMode,
-} from "./types";
+} from "../types";
 
 interface UseMediaLibraryOptions {
     pageSize?: number;

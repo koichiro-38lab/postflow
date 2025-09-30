@@ -12,7 +12,7 @@ import {
 import { buildMediaUrl } from "@/lib/media-url";
 import { copyTextToClipboard } from "@/lib/media-utils";
 
-import type { MediaListItem, SucceededMediaItem } from "./types";
+import type { MediaListItem, SucceededMediaItem } from "../types";
 
 interface UseMediaDetailOptions {
     setItems: Dispatch<SetStateAction<MediaListItem[]>>;

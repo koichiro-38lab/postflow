@@ -5,7 +5,7 @@ import type {
     MediaListItem,
     SucceededMediaItem,
 } from "@/features/admin/media/types";
-import { UPLOAD_PHASE_LABEL } from "@/features/admin/media/use-media-uploader";
+import { UPLOAD_PHASE_LABEL } from "@/features/admin/media/types";
 import { formatBytes } from "@/lib/media-utils";
 import { cn } from "@/lib/utils";
 import { AlertCircle, Check, Loader2 } from "lucide-react";

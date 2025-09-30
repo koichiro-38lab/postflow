@@ -10,9 +10,9 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
-import { useMediaDetail } from "@/features/admin/media/use-media-detail";
-import { useMediaLibrary } from "@/features/admin/media/use-media-library";
-import { useMediaUploader } from "@/features/admin/media/use-media-uploader";
+import { useMediaDetail } from "@/features/admin/media/hooks/use-media-detail";
+import { useMediaLibrary } from "@/features/admin/media/hooks/use-media-library";
+import { useMediaUploader } from "@/features/admin/media/hooks/use-media-uploader";
 import { buildMediaUrl } from "@/lib/media-url";
 import { useToast } from "@/hooks/use-toast";
 
