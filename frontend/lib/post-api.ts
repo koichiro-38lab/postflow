@@ -6,6 +6,19 @@ export interface CategorySummary {
     id: number;
     name: string;
     slug: string;
+    parent?: { id: number } | null;
+    sortOrder: number;
+}
+
+export interface Category {
+    id: number;
+    name: string;
+    slug: string;
+    parent?: CategorySummary | null;
+    sortOrder: number;
+    postCount: number;
+    createdAt: string;
+    updatedAt: string;
 }
 
 export interface TagSummary {
@@ -60,9 +73,48 @@ export async function fetchPosts(
     return res.data;
 }
 
-export async function fetchCategories(): Promise<CategorySummary[]> {
+export async function fetchCategories(): Promise<Category[]> {
     const res = await api.get(`${API_BASE_URL}/api/admin/categories`);
     return res.data;
+}
+
+export interface CategoryCreateRequest {
+    name: string;
+    slug: string;
+    parentId?: number;
+}
+
+export async function createCategory(
+    request: CategoryCreateRequest
+): Promise<Category> {
+    const res = await api.post(`${API_BASE_URL}/api/admin/categories`, request);
+    return res.data;
+}
+
+export async function updateCategory(
+    id: number,
+    request: CategoryCreateRequest
+): Promise<Category> {
+    const res = await api.put(
+        `${API_BASE_URL}/api/admin/categories/${id}`,
+        request
+    );
+    return res.data;
+}
+
+export async function deleteCategory(id: number): Promise<void> {
+    await api.delete(`${API_BASE_URL}/api/admin/categories/${id}`);
+}
+
+export interface CategoryReorderRequest {
+    categoryId: number;
+    newSortOrder: number;
+}
+
+export async function reorderCategories(
+    requests: CategoryReorderRequest[]
+): Promise<void> {
+    await api.put(`${API_BASE_URL}/api/admin/categories/reorder`, requests);
 }
 
 export async function fetchTags(): Promise<TagSummary[]> {
