@@ -13,6 +13,11 @@ import {
     fetchTags,
     TagSummary,
 } from "@/lib/post-api";
+import {
+    buildCategoryTree,
+    PL_CLASSES,
+    CategoryWithLevel,
+} from "@/lib/category-utils";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -628,17 +633,48 @@ export default function PostForm({
                                                             カテゴリを読み込み中...
                                                         </SelectItem>
                                                     ) : (
-                                                        categories.map(
-                                                            (category) => (
+                                                        buildCategoryTree(
+                                                            categories
+                                                        ).map(
+                                                            (
+                                                                category: CategoryWithLevel
+                                                            ) => (
                                                                 <SelectItem
                                                                     key={
                                                                         category.id
                                                                     }
                                                                     value={category.id.toString()}
+                                                                    className="text-sm"
                                                                 >
-                                                                    {
-                                                                        category.name
-                                                                    }
+                                                                    <span className="flex items-center">
+                                                                        {/* 階層レベルに応じてインデント */}
+                                                                        {Array.from(
+                                                                            {
+                                                                                length: category.level,
+                                                                            }
+                                                                        ).map(
+                                                                            (
+                                                                                _,
+                                                                                i
+                                                                            ) => (
+                                                                                <span
+                                                                                    key={
+                                                                                        i
+                                                                                    }
+                                                                                    className="inline-block w-4"
+                                                                                />
+                                                                            )
+                                                                        )}
+                                                                        {category.level >
+                                                                            0 && (
+                                                                            <span className="text-muted-foreground mr-2">
+                                                                                └
+                                                                            </span>
+                                                                        )}
+                                                                        {
+                                                                            category.name
+                                                                        }
+                                                                    </span>
                                                                 </SelectItem>
                                                             )
                                                         )

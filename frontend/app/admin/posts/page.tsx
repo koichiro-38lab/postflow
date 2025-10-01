@@ -10,6 +10,7 @@ import {
     CategorySummary,
     fetchCategories,
 } from "@/lib/post-api";
+import { buildCategoryTree, CategoryWithLevel } from "@/lib/category-utils";
 import { isApiError } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
 import { cn } from "@/lib/utils";
@@ -81,6 +82,9 @@ function AdminPostsPageContent() {
         parseInt(searchParams.get("size") || "10")
     );
     const [categories, setCategories] = useState<CategorySummary[]>([]);
+
+    // buildCategoryTree と PL_CLASSES を共通化した helpers からインポート
+
     const { accessToken, refresh } = useAuthStore();
 
     useEffect(() => {
@@ -179,10 +183,12 @@ function AdminPostsPageContent() {
                 // スケルトンを少し長めに表示するために遅延を追加
                 setTimeout(() => {
                     setLoading(false);
-                }, 100); // 100ms の追加遅延
+                }, 200); // 100ms の追加遅延
             } catch (e: unknown) {
                 if (!(isApiError(e) && e.response?.status === 401)) {
-                    setError(e instanceof Error ? e.message : "取得に失敗しました");
+                    setError(
+                        e instanceof Error ? e.message : "取得に失敗しました"
+                    );
                 }
                 setLoading(false); // エラー時は即座にローディング終了
             }
@@ -346,14 +352,33 @@ function AdminPostsPageContent() {
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">すべて</SelectItem>
-                            {categories.map((category) => (
-                                <SelectItem
-                                    key={category.id}
-                                    value={category.id.toString()}
-                                >
-                                    {category.name}
-                                </SelectItem>
-                            ))}
+                            {buildCategoryTree(categories).map(
+                                (category: CategoryWithLevel) => (
+                                    <SelectItem
+                                        key={category.id}
+                                        value={category.id.toString()}
+                                        className="text-sm"
+                                    >
+                                        <span className="flex items-center">
+                                            {/* 階層レベルに応じてインデント */}
+                                            {Array.from({
+                                                length: category.level,
+                                            }).map((_, i) => (
+                                                <span
+                                                    key={i}
+                                                    className="inline-block w-4"
+                                                />
+                                            ))}
+                                            {category.level > 0 && (
+                                                <span className="text-muted-foreground mr-2">
+                                                    └
+                                                </span>
+                                            )}
+                                            {category.name}
+                                        </span>
+                                    </SelectItem>
+                                )
+                            )}
                         </SelectContent>
                     </Select>
                 </div>
@@ -379,7 +404,7 @@ function AdminPostsPageContent() {
             {error && <div className="text-red-500 mb-4">{error}</div>}
 
             <div className="rounded-md border">
-                <Table className="table-fixed">
+                <Table className="min-w-[700px] table-auto">
                     <TableHeader>
                         <TableRow>
                             <TableHead className="w-2/4">
@@ -459,13 +484,13 @@ function AdminPostsPageContent() {
                                         )
                                     }
                                 >
-                                    <TableCell className="font-medium">
+                                    <TableCell className="font-medium whitespace-nowrap">
                                         {post.title}
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell className="whitespace-nowrap">
                                         {post.category?.name || "未設定"}
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell className="whitespace-nowrap">
                                         <div className="flex items-center gap-1">
                                             {post.status === "DRAFT" && (
                                                 <span className="flex items-center border gap-1 px-2 py-1 rounded-lg text-xs">
@@ -487,8 +512,10 @@ function AdminPostsPageContent() {
                                             )}
                                         </div>
                                     </TableCell>
-                                    <TableCell>{post.slug}</TableCell>
-                                    <TableCell>
+                                    <TableCell className="whitespace-nowrap">
+                                        {post.slug}
+                                    </TableCell>
+                                    <TableCell className="whitespace-nowrap">
                                         {post.publishedAt
                                             ? new Date(
                                                   post.publishedAt
