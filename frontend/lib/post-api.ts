@@ -25,6 +25,16 @@ export interface TagSummary {
     id: number;
     name: string;
     slug: string;
+    postCount?: number; // オプション: 投稿数
+}
+
+export interface Tag {
+    id: number;
+    name: string;
+    slug: string;
+    postCount: number;
+    createdAt: string;
+    updatedAt: string;
 }
 
 export interface Post {
@@ -33,6 +43,7 @@ export interface Post {
     slug: string;
     publishedAt: string | null;
     category: CategorySummary | null;
+    tags?: TagSummary[];
     status: string;
     // 必要に応じて他のフィールドも追加
 }
@@ -117,19 +128,59 @@ export async function reorderCategories(
     await api.put(`${API_BASE_URL}/api/admin/categories/reorder`, requests);
 }
 
-export async function fetchTags(): Promise<TagSummary[]> {
-    const res = await api.get(`${API_BASE_URL}/api/admin/tags`);
+// タグ一覧取得（管理画面用）
+// 投稿数を含む完全な情報を取得
+export async function fetchTags(params?: {
+    query?: string;
+    page?: number;
+    size?: number;
+}): Promise<Tag[]> {
+    const queryParams: Record<string, string | number> = {};
+
+    if (params?.query) queryParams.query = params.query;
+    if (params?.page !== undefined) queryParams.page = params.page;
+    if (params?.size !== undefined) queryParams.size = params.size;
+
+    const res = await api.get(`${API_BASE_URL}/api/admin/tags`, {
+        params: queryParams,
+    });
     return res.data;
 }
 
+// 個別タグ取得（投稿数を含む詳細情報）
+export async function fetchTag(id: number): Promise<Tag> {
+    const res = await api.get(`${API_BASE_URL}/api/admin/tags/${id}`);
+    return res.data;
+}
+
+// スラッグでタグ取得（投稿数を含む詳細情報）
+export async function fetchTagBySlug(slug: string): Promise<Tag> {
+    const res = await api.get(`${API_BASE_URL}/api/admin/tags/slug/${slug}`);
+    return res.data;
+}
+
+// タグ作成リクエスト型
 export interface TagCreateRequest {
     name: string;
     slug: string;
 }
 
-export async function createTag(
-    request: TagCreateRequest
-): Promise<TagSummary> {
+// タグ作成
+export async function createTag(request: TagCreateRequest): Promise<Tag> {
     const res = await api.post(`${API_BASE_URL}/api/admin/tags`, request);
     return res.data;
+}
+
+// タグ更新
+export async function updateTag(
+    id: number,
+    request: TagCreateRequest
+): Promise<Tag> {
+    const res = await api.put(`${API_BASE_URL}/api/admin/tags/${id}`, request);
+    return res.data;
+}
+
+// タグ削除
+export async function deleteTag(id: number): Promise<void> {
+    await api.delete(`${API_BASE_URL}/api/admin/tags/${id}`);
 }
