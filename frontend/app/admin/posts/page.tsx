@@ -13,6 +13,7 @@ import {
 import { buildCategoryTree, CategoryWithLevel } from "@/lib/category-utils";
 import { isApiError } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
+import { TagBadge } from "@/components/TagBadge";
 import { cn } from "@/lib/utils";
 import {
     Table,
@@ -301,6 +302,9 @@ function AdminPostsPageContent() {
                 <Skeleton className="h-4 w-2/3" /> {/* カテゴリー: 可変幅 */}
             </TableCell>
             <TableCell>
+                <Skeleton className="h-4 w-2/3" /> {/* タグ: 可変幅 */}
+            </TableCell>
+            <TableCell>
                 <Skeleton className="h-4 w-2/3" /> {/* ステータス: 可変幅 */}
             </TableCell>
             <TableCell>
@@ -404,10 +408,10 @@ function AdminPostsPageContent() {
             {error && <div className="text-red-500 mb-4">{error}</div>}
 
             <div className="rounded-md border">
-                <Table className="min-w-[700px] table-auto">
+                <Table className="min-w-[900px] table-auto">
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="w-2/4">
+                            <TableHead className="w-2/5">
                                 <Button
                                     variant="ghost"
                                     onClick={() => handleSort("title")}
@@ -417,7 +421,7 @@ function AdminPostsPageContent() {
                                     {getSortIcon("title")}
                                 </Button>
                             </TableHead>
-                            <TableHead className="w-1/6">
+                            <TableHead className="w-1/8">
                                 <Button
                                     variant="ghost"
                                     onClick={() => handleSort("category")}
@@ -427,7 +431,8 @@ function AdminPostsPageContent() {
                                     {getSortIcon("category")}
                                 </Button>
                             </TableHead>
-                            <TableHead className="w-1/6">
+                            <TableHead className="w-1/6">タグ</TableHead>
+                            <TableHead className="w-1/8">
                                 <Button
                                     variant="ghost"
                                     onClick={() => handleSort("status")}
@@ -437,7 +442,7 @@ function AdminPostsPageContent() {
                                     {getSortIcon("status")}
                                 </Button>
                             </TableHead>
-                            <TableHead className="w-1/4">
+                            <TableHead className="w-1/6">
                                 <Button
                                     variant="ghost"
                                     onClick={() => handleSort("slug")}
@@ -447,7 +452,7 @@ function AdminPostsPageContent() {
                                     {getSortIcon("slug")}
                                 </Button>
                             </TableHead>
-                            <TableHead className="w-1/6">
+                            <TableHead className="w-1/8">
                                 <Button
                                     variant="ghost"
                                     onClick={() => handleSort("publishedAt")}
@@ -467,7 +472,7 @@ function AdminPostsPageContent() {
                         ) : posts.length === 0 ? (
                             <TableRow className="h-12">
                                 <TableCell
-                                    colSpan={5}
+                                    colSpan={6}
                                     className="text-center py-8 text-muted-foreground"
                                 >
                                     記事がありません。
@@ -489,6 +494,24 @@ function AdminPostsPageContent() {
                                     </TableCell>
                                     <TableCell className="whitespace-nowrap">
                                         {post.category?.name || "未設定"}
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex flex-wrap gap-1">
+                                            {post.tags &&
+                                            post.tags.length > 0 ? (
+                                                post.tags.map((tag) => (
+                                                    <TagBadge
+                                                        key={tag.id}
+                                                        tag={tag}
+                                                        clickable={false}
+                                                    />
+                                                ))
+                                            ) : (
+                                                <span className="text-muted-foreground text-xs">
+                                                    —
+                                                </span>
+                                            )}
+                                        </div>
                                     </TableCell>
                                     <TableCell className="whitespace-nowrap">
                                         <div className="flex items-center gap-1">
