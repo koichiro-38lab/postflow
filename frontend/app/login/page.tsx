@@ -22,6 +22,8 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { useAuthStore } from "@/lib/auth-store";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 
 const loginSchema = z.object({
     email: z.string().email("Invalid email address"),
@@ -58,69 +60,77 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-background">
-            <Card className="w-full max-w-md">
-                <CardHeader>
-                    <CardTitle>ログイン</CardTitle>
-                    <CardDescription>
-                        管理パネルにアクセスするための認証情報を入力してください
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    {error && (
-                        <div className="p-4 mb-3 bg-red-50 border border-red-200 rounded-md">
-                            <p className="text-sm text-red-600">{error}</p>
-                        </div>
-                    )}
-                    <Form {...form}>
-                        <form
-                            onSubmit={form.handleSubmit(onSubmit)}
-                            className="space-y-4"
-                        >
-                            <FormField
-                                control={form.control}
-                                name="email"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>メールアドレス</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                placeholder="admin@example.com"
-                                                {...field}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="password"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>パスワード</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                type="password"
-                                                placeholder="password123"
-                                                {...field}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <Button
-                                type="submit"
-                                className="w-full"
-                                disabled={isLoading || formState.isSubmitting}
+        <div className="min-h-screen flex flex-col bg-background">
+            <Header />
+            <div className="flex-1 flex items-center justify-center">
+                <Card className="w-full max-w-md">
+                    <CardHeader>
+                        <CardTitle>ログイン</CardTitle>
+                        <CardDescription>
+                            管理パネルにアクセスするための認証情報を入力してください
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {error && (
+                            <div className="p-4 mb-3 bg-red-50 border border-red-200 rounded-md">
+                                <p className="text-sm text-red-600">{error}</p>
+                            </div>
+                        )}
+                        <Form {...form}>
+                            <form
+                                onSubmit={form.handleSubmit(onSubmit)}
+                                className="space-y-4"
                             >
-                                ログイン
-                            </Button>
-                        </form>
-                    </Form>
-                </CardContent>
-            </Card>
+                                <FormField
+                                    control={form.control}
+                                    name="email"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>
+                                                メールアドレス
+                                            </FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    placeholder="admin@example.com"
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <FormField
+                                    control={form.control}
+                                    name="password"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>パスワード</FormLabel>
+                                            <FormControl>
+                                                <Input
+                                                    type="password"
+                                                    placeholder="password123"
+                                                    {...field}
+                                                />
+                                            </FormControl>
+                                            <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <Button
+                                    type="submit"
+                                    className="w-full"
+                                    disabled={
+                                        isLoading || formState.isSubmitting
+                                    }
+                                >
+                                    ログイン
+                                </Button>
+                            </form>
+                        </Form>
+                    </CardContent>
+                </Card>
+            </div>
+            <Footer />
         </div>
     );
 }
