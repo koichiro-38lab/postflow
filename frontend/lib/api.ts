@@ -14,7 +14,10 @@ type HeadersWithOptionalSet = {
     [key: string]: unknown;
 };
 
-const applyAuthorizationHeader = (config: AxiosRequestConfig, token: string) => {
+const applyAuthorizationHeader = (
+    config: AxiosRequestConfig,
+    token: string
+) => {
     if (config.headers) {
         const headers = config.headers as HeadersWithOptionalSet;
         if (typeof headers.set === "function") {

@@ -10,6 +10,8 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { useAuthStore } from "@/lib/auth-store";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 
 export default function Home() {
     const router = useRouter();
@@ -22,8 +24,9 @@ export default function Home() {
     }, [accessToken, router]);
 
     return (
-        <div className="min-h-screen bg-background">
-            <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <div className="min-h-screen bg-background flex flex-col">
+            <Header />
+            <main className="flex-1 max-w-7xl mx-auto py-6 sm:px-6 lg:px-8 w-full">
                 <div className="px-4 py-6 sm:px-0">
                     <div className="text-center">
                         <h2 className="text-4xl font-bold text-foreground mb-4">
@@ -79,6 +82,7 @@ export default function Home() {
                     </div>
                 </div>
             </main>
+            <Footer />
         </div>
     );
 }
