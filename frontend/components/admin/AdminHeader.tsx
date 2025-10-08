@@ -13,8 +13,16 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
+} from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { Menu } from "lucide-react";
 import { UserProfileResponse, UserRole } from "@/lib/user-api";
 import { fetchMediaDetail, MediaResponse } from "@/lib/media-api";
 import { buildMediaUrl } from "@/lib/media-url";
@@ -27,6 +35,7 @@ export default function AdminHeader() {
     const [isClient, setIsClient] = useState(false);
     const [profile, setProfile] = useState<UserProfileResponse | null>(null);
     const [avatarMedia, setAvatarMedia] = useState<MediaResponse | null>(null);
+    const [isSheetOpen, setIsSheetOpen] = useState(false);
 
     const handleLogout = () => {
         logout();
@@ -87,16 +96,90 @@ export default function AdminHeader() {
 
     return (
         <header className="bg-card border-b sticky top-0 z-50">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-7xl mx-auto pr-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center py-4">
-                    <Link href="/admin">
-                        <span className="text-2xl font-bold text-foreground cursor-pointer">
-                            PostFlow{" "}
-                            <span className="text-sm text-muted-foreground">
-                                Admin
+                    {/* モバイルメニュー */}
+                    <div className="flex items-center gap-1">
+                        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+                            <SheetTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="md:hidden"
+                                >
+                                    <Menu className="h-6 w-6" />
+                                    <span className="sr-only">メニュー</span>
+                                </Button>
+                            </SheetTrigger>
+                            <SheetContent side="left" className="w-64">
+                                <SheetHeader>
+                                    <SheetTitle></SheetTitle>
+                                </SheetHeader>
+                                <nav className="flex flex-col gap-4 mt-6">
+                                    <Link
+                                        href="/admin/posts"
+                                        className="text-sm font-medium hover:text-primary transition-colors px-2 py-1"
+                                        onClick={() => setIsSheetOpen(false)}
+                                    >
+                                        記事
+                                    </Link>
+                                    <Link
+                                        href="/admin/media"
+                                        className="text-sm font-medium hover:text-primary transition-colors px-2 py-1"
+                                        onClick={() => setIsSheetOpen(false)}
+                                    >
+                                        メディア
+                                    </Link>
+                                    {/* カテゴリとタグは ADMIN/EDITOR のみ表示 */}
+                                    {profile?.role &&
+                                        (profile.role === "ADMIN" ||
+                                            profile.role === "EDITOR") && (
+                                            <>
+                                                <Link
+                                                    href="/admin/categories"
+                                                    className="text-sm font-medium hover:text-primary transition-colors px-2 py-1"
+                                                    onClick={() =>
+                                                        setIsSheetOpen(false)
+                                                    }
+                                                >
+                                                    カテゴリ
+                                                </Link>
+                                                <Link
+                                                    href="/admin/tags"
+                                                    className="text-sm font-medium hover:text-primary transition-colors px-2 py-1"
+                                                    onClick={() =>
+                                                        setIsSheetOpen(false)
+                                                    }
+                                                >
+                                                    タグ
+                                                </Link>
+                                            </>
+                                        )}
+                                    {/* ユーザー管理は ADMIN のみ表示 */}
+                                    {profile?.role === "ADMIN" && (
+                                        <Link
+                                            href="/admin/users"
+                                            className="text-sm font-medium hover:text-primary transition-colors px-2 py-1"
+                                            onClick={() =>
+                                                setIsSheetOpen(false)
+                                            }
+                                        >
+                                            ユーザー
+                                        </Link>
+                                    )}
+                                </nav>
+                            </SheetContent>
+                        </Sheet>
+
+                        <Link href="/admin">
+                            <span className="text-2xl font-bold text-foreground cursor-pointer">
+                                PostFlow{" "}
+                                <span className="text-sm text-muted-foreground">
+                                    Admin
+                                </span>
                             </span>
-                        </span>
-                    </Link>
+                        </Link>
+                    </div>
 
                     {/* ナビゲーションメニュー */}
                     <nav className="hidden md:flex items-center gap-6">
@@ -112,24 +195,34 @@ export default function AdminHeader() {
                         >
                             メディア
                         </Link>
-                        <Link
-                            href="/admin/categories"
-                            className="text-sm font-medium hover:text-primary transition-colors"
-                        >
-                            カテゴリ
-                        </Link>
-                        <Link
-                            href="/admin/tags"
-                            className="text-sm font-medium hover:text-primary transition-colors"
-                        >
-                            タグ
-                        </Link>
-                        <Link
-                            href="/admin/users"
-                            className="text-sm font-medium hover:text-primary transition-colors"
-                        >
-                            ユーザー
-                        </Link>
+                        {/* カテゴリとタグは ADMIN/EDITOR のみ表示 */}
+                        {profile?.role &&
+                            (profile.role === "ADMIN" ||
+                                profile.role === "EDITOR") && (
+                                <>
+                                    <Link
+                                        href="/admin/categories"
+                                        className="text-sm font-medium hover:text-primary transition-colors"
+                                    >
+                                        カテゴリ
+                                    </Link>
+                                    <Link
+                                        href="/admin/tags"
+                                        className="text-sm font-medium hover:text-primary transition-colors"
+                                    >
+                                        タグ
+                                    </Link>
+                                </>
+                            )}
+                        {/* ユーザー管理は ADMIN のみ表示 */}
+                        {profile?.role === "ADMIN" && (
+                            <Link
+                                href="/admin/users"
+                                className="text-sm font-medium hover:text-primary transition-colors"
+                            >
+                                ユーザー
+                            </Link>
+                        )}
                     </nav>
 
                     {/* 右側メニュー */}
