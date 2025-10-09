@@ -7,14 +7,13 @@ import React, {
     useMemo,
     useRef,
 } from "react";
-import { Folder, GripVertical } from "lucide-react";
+import { Folder, GripVertical, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from "@/components/ui/dialog";
 import {
     TableCell,
@@ -150,11 +149,11 @@ export function CategoryList() {
     const handleDelete = async (id: number) => {
         try {
             await deleteCategory(id);
-            toast.success("カテゴリを削除しました。");
+            toast.success("カテゴリを削除しました");
             loadCategories();
             setIsDialogOpen(false);
         } catch {
-            toast.error("カテゴリの削除に失敗しました。");
+            toast.error("カテゴリの削除に失敗しました");
         }
     };
 
@@ -201,9 +200,9 @@ export function CategoryList() {
                 })
             );
             await reorderCategories(reorderRequests);
-            toast.success("カテゴリの順序を更新しました。");
+            toast.success("カテゴリの順序を更新しました");
         } catch {
-            toast.error("並び替えに失敗しました。");
+            toast.error("並び替えに失敗しました");
             loadCategories();
         }
     };
@@ -292,6 +291,7 @@ export function CategoryList() {
                         size="sm"
                         onClick={() => handleEdit(category)}
                     >
+                        <Pencil className="h-4 w-4" />
                         編集
                     </Button>
                 </TableCell>
@@ -300,14 +300,15 @@ export function CategoryList() {
     };
     return (
         <div>
+            <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+                <h1 className="text-2xl font-bold">カテゴリ一覧</h1>
+                <Button onClick={handleCreate}>
+                    <Folder className="h-4 w-4" />
+                    新規作成
+                </Button>
+            </div>
             <div className="mb-4">
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button onClick={handleCreate}>
-                            <Folder className="h-4 w-4" />
-                            新規作成
-                        </Button>
-                    </DialogTrigger>
                     <DialogContent>
                         <DialogHeader>
                             <DialogTitle>
@@ -329,39 +330,43 @@ export function CategoryList() {
                 </Dialog>
             </div>
             {loading ? (
-                <Table className="min-w-[700px] table-auto">
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead className="whitespace-nowrap min-w-[220px]">
-                                カテゴリー名
-                            </TableHead>
-                            <TableHead className="whitespace-nowrap min-w-[140px]">
-                                スラッグ
-                            </TableHead>
-                            <TableHead className="whitespace-nowrap min-w-[80px]">
-                                投稿数
-                            </TableHead>
-                            <TableHead className="whitespace-nowrap min-w-[160px]">
-                                作成日
-                            </TableHead>
-                            <TableHead className="whitespace-nowrap min-w-[80px]"></TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {Array.from({ length: Math.max(1, lastCount) }).map(
-                            (_, index) => (
-                                <SkeletonRow key={index} />
-                            )
-                        )}
-                    </TableBody>
-                </Table>
+                <div className="rounded-md border">
+                    <Table className="min-w-[700px] table-auto">
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead className="whitespace-nowrap min-w-[220px]">
+                                    カテゴリー名
+                                </TableHead>
+                                <TableHead className="whitespace-nowrap min-w-[140px]">
+                                    スラッグ
+                                </TableHead>
+                                <TableHead className="whitespace-nowrap min-w-[80px]">
+                                    投稿数
+                                </TableHead>
+                                <TableHead className="whitespace-nowrap min-w-[160px]">
+                                    作成日
+                                </TableHead>
+                                <TableHead className="whitespace-nowrap min-w-[80px]"></TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {Array.from({ length: Math.max(1, lastCount) }).map(
+                                (_, index) => (
+                                    <SkeletonRow key={index} />
+                                )
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
             ) : (
-                <SortableTree
-                    items={treeItems}
-                    onChange={handleTreeChange}
-                    onInvalidMove={(reason) => toast.error(reason)}
-                    renderItem={renderCategoryItem}
-                />
+                <div className="rounded-md border">
+                    <SortableTree
+                        items={treeItems}
+                        onChange={handleTreeChange}
+                        onInvalidMove={(reason) => toast.error(reason)}
+                        renderItem={renderCategoryItem}
+                    />
+                </div>
             )}
         </div>
     );

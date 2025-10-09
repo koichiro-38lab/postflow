@@ -107,17 +107,17 @@ export function CategoryForm({
         try {
             if (category) {
                 await updateCategory(category.id, request);
-                toast.success("カテゴリを更新しました。");
+                toast.success("カテゴリを更新しました");
             } else {
                 await createCategory(request);
-                toast.success("カテゴリを作成しました。");
+                toast.success("カテゴリを作成しました");
             }
             onSuccess();
         } catch {
             toast.error(
                 category
-                    ? "カテゴリの更新に失敗しました。"
-                    : "カテゴリの作成に失敗しました。"
+                    ? "カテゴリの更新に失敗しました"
+                    : "カテゴリの作成に失敗しました"
             );
         } finally {
             setLoading(false);
@@ -205,7 +205,7 @@ export function CategoryForm({
                         </Button>
                     )}
                     <Button type="submit" disabled={loading}>
-                        {loading ? "保存中..." : category ? "更新" : "作成"}
+                        {category ? "更新" : "作成"}
                     </Button>
                 </div>
             </form>
