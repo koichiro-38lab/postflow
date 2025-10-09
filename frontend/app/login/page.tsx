@@ -26,8 +26,8 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 
 const loginSchema = z.object({
-    email: z.string().email("Invalid email address"),
-    password: z.string().min(1, "Password is required"),
+    email: z.string().email("メールアドレスの形式が正しくありません"),
+    password: z.string().min(1, "パスワードは必須です"),
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
@@ -63,12 +63,10 @@ export default function LoginPage() {
         <div className="min-h-screen flex flex-col bg-background">
             <Header />
             <div className="flex-1 flex items-center justify-center">
-                <Card className="w-full max-w-md">
+                <Card className="w-11/12 md:w-full max-w-md">
                     <CardHeader>
                         <CardTitle>ログイン</CardTitle>
-                        <CardDescription>
-                            管理パネルにアクセスするための認証情報を入力してください
-                        </CardDescription>
+                        <CardDescription></CardDescription>
                     </CardHeader>
                     <CardContent>
                         {error && (
@@ -91,7 +89,7 @@ export default function LoginPage() {
                                             </FormLabel>
                                             <FormControl>
                                                 <Input
-                                                    placeholder="admin@example.com"
+                                                    placeholder="メールアドレスを入力"
                                                     {...field}
                                                 />
                                             </FormControl>
@@ -108,7 +106,7 @@ export default function LoginPage() {
                                             <FormControl>
                                                 <Input
                                                     type="password"
-                                                    placeholder="password123"
+                                                    placeholder="パスワードを入力"
                                                     {...field}
                                                 />
                                             </FormControl>
