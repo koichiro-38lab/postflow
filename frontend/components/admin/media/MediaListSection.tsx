@@ -8,11 +8,7 @@ import type {
     SucceededMediaItem,
     ViewMode,
 } from "@/features/admin/media/types";
-import {
-    LayoutGrid,
-    List,
-    Loader2,
-} from "lucide-react";
+import { LayoutGrid, List, Loader2 } from "lucide-react";
 
 import { MediaGrid } from "./MediaGrid";
 import { MediaList } from "./MediaList";
@@ -68,7 +64,9 @@ export function MediaListSection({
                 style={{ height: "min(420px, 50vh)" }}
             >
                 {listError && (
-                    <p className="mb-3 px-4 text-sm text-destructive">{listError}</p>
+                    <p className="mb-3 px-4 text-sm text-destructive">
+                        {listError}
+                    </p>
                 )}
 
                 {showInitialLoading ? (
@@ -85,6 +83,7 @@ export function MediaListSection({
                         onItemClick={itemClickHandler}
                         selectionMode={selectionMode}
                         selectedItemId={selectedItemId}
+                        showLoadMoreSpinner={showLoadMoreSpinner}
                     />
                 ) : (
                     <MediaGrid
@@ -94,10 +93,9 @@ export function MediaListSection({
                         onItemClick={itemClickHandler}
                         selectionMode={selectionMode}
                         selectedItemId={selectedItemId}
+                        showLoadMoreSpinner={showLoadMoreSpinner}
                     />
                 )}
-
-                {showLoadMoreSpinner && <LoadMoreSpinner />}
             </div>
         </div>
     );
@@ -152,18 +150,6 @@ function InitialLoadingNotice() {
     return (
         <div className="flex max-w-sm flex-col items-center gap-3 text-sm text-muted-foreground">
             <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
-                <span className="sr-only">読み込み中...</span>
-            </span>
-            <span>メディアを読み込んでいます...</span>
-        </div>
-    );
-}
-
-function LoadMoreSpinner() {
-    return (
-        <div className="pointer-events-none absolute left-1/2 bottom-4 z-10 flex -translate-x-1/2 justify-center">
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-background/95 text-primary shadow-md ring-1 ring-primary/40">
                 <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
                 <span className="sr-only">読み込み中...</span>
             </span>

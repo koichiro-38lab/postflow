@@ -17,11 +17,11 @@ export function TagBadge({ tag, clickable = true }: TagBadgeProps) {
         return (
             <Link href={href}>
                 <Badge variant="secondary" className="hover:bg-secondary/80">
-                    #{tag.name}
+                    # {tag.name}
                 </Badge>
             </Link>
         );
     }
 
-    return <Badge variant="secondary">#{tag.name}</Badge>;
+    return <Badge variant="secondary"># {tag.name}</Badge>;
 }

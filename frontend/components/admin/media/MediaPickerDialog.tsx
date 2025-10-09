@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { MediaUploader } from "@/components/MediaUploader";
+import { MediaUploader } from "@/components/admin/media/MediaUploader";
 import { Button } from "@/components/ui/button";
 import {
     Dialog,
@@ -16,7 +16,6 @@ import {
 import type { SucceededMediaItem } from "@/features/admin/media/types";
 import { useMediaLibrary } from "@/features/admin/media/hooks/use-media-library";
 import { useMediaUploader } from "@/features/admin/media/hooks/use-media-uploader";
-import { useToast } from "@/hooks/use-toast";
 import { buildMediaUrl } from "@/lib/media-url";
 import { formatBytes, formatDateTime } from "@/lib/media-utils";
 import { cn } from "@/lib/utils";
@@ -36,8 +35,6 @@ export function MediaPickerDialog({
     onOpenChange,
     onSelect,
 }: MediaPickerDialogProps) {
-    const { toast } = useToast();
-
     const {
         items,
         setItems,
@@ -56,7 +53,6 @@ export function MediaPickerDialog({
         setItems,
         setListError,
         setHasMore,
-        toast,
     });
 
     const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -218,7 +214,7 @@ export function MediaPickerDialog({
                                                     {selectedItem.createdBy && (
                                                         <DetailRow
                                                             label="登録者"
-                                                            value={`${selectedItem.createdBy.email}`}
+                                                            value={`${selectedItem.createdBy.displayName}`}
                                                         />
                                                     )}
                                                 </dl>

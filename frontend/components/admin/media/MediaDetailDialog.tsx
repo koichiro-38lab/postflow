@@ -24,7 +24,7 @@ import type { SucceededMediaItem } from "@/features/admin/media/types";
 import { formatBytes, formatDateTime } from "@/lib/media-utils";
 import { cn } from "@/lib/utils";
 import { DialogDescription } from "@radix-ui/react-dialog";
-import { Copy, Download, Loader2, Trash2 } from "lucide-react";
+import { Download, Loader2, Trash2 } from "lucide-react";
 
 interface MediaDetailDialogProps {
     open: boolean;
@@ -58,7 +58,6 @@ export function MediaDetailDialog({
     deleteLoading,
     deleteConfirmOpen,
     onRetry,
-    onCopyUrl,
     onDownload,
     onRequestDelete,
     onCancelDelete,
@@ -86,15 +85,6 @@ export function MediaDetailDialog({
         return (
             <DialogFooter className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex flex-wrap gap-2">
-                    <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={onCopyUrl}
-                        disabled={!detailPublicUrl}
-                    >
-                        <Copy className="h-4 w-4" /> URLコピー
-                    </Button>
                     <Button
                         type="button"
                         size="sm"
@@ -219,8 +209,8 @@ export function MediaDetailDialog({
                                             )}
                                         />
                                         <DetailRow
-                                            label="作成者"
-                                            value={`${detailMedia.createdBy.email}（${detailMedia.createdBy.role}）`}
+                                            label="登録者"
+                                            value={`${detailMedia.createdBy.displayName}`}
                                             valueClassName="break-words"
                                         />
                                     </dl>

@@ -18,6 +18,7 @@ export interface MediaGridProps {
     onItemClick?: (item: SucceededMediaItem) => void;
     selectionMode?: boolean;
     selectedItemId?: number | null;
+    showLoadMoreSpinner?: boolean;
 }
 
 export function MediaGrid({
@@ -27,6 +28,7 @@ export function MediaGrid({
     onItemClick,
     selectionMode = false,
     selectedItemId = null,
+    showLoadMoreSpinner = false,
 }: MediaGridProps) {
     // グリッド表示用にカードを展開
     return (
@@ -49,6 +51,17 @@ export function MediaGrid({
                     </li>
                 );
             })}
+            {showLoadMoreSpinner && (
+                <li className="col-span-full flex justify-center py-4">
+                    <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary/20 text-primary shadow-md ring-2 ring-primary/50">
+                        <Loader2
+                            className="h-5 w-5 animate-spin"
+                            aria-hidden="true"
+                        />
+                        <span className="sr-only">読み込み中...</span>
+                    </span>
+                </li>
+            )}
         </ul>
     );
 }

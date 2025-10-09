@@ -324,7 +324,7 @@ export function SortableTree({
 
                 // 親が変わる場合は移動を拒否
                 if (activeItem.parentId !== newParentId) {
-                    onInvalidMove?.("子カテゴリの移動はできません。");
+                    onInvalidMove?.("子カテゴリの移動はできません");
                     return;
                 }
             }

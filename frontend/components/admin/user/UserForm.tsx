@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -28,7 +28,7 @@ import { MediaPickerDialog } from "@/components/admin/media/MediaPickerDialog";
 import type { SucceededMediaItem } from "@/features/admin/media/types";
 import { fetchMediaDetail, MediaResponse } from "@/lib/media-api";
 import { buildMediaUrl } from "@/lib/media-url";
-import { ImageIcon, X, Loader2 } from "lucide-react";
+import { ImageIcon, X, Save, Loader2 } from "lucide-react";
 import type {
     UserResponse,
     UserProfileResponse,
@@ -202,7 +202,7 @@ export function UserForm({
         form.setValue("avatarMediaId", item.id);
         setAvatarStorageKey(item.storageKey);
         setMediaPickerOpen(false);
-        toast.success("アバター画像を選択しました。");
+        toast.success("アバター画像を選択しました");
     };
 
     // アバター削除ハンドラ
@@ -210,7 +210,7 @@ export function UserForm({
         form.setValue("avatarMediaId", null);
         setAvatarStorageKey(null);
         setAvatarMedia(null);
-        toast.success("アバター画像を削除しました。");
+        toast.success("アバター画像を削除しました");
     };
 
     // アバター画像URLを取得
@@ -238,22 +238,67 @@ export function UserForm({
     };
 
     // フォーム送信処理
-    const handleFormSubmit = async (data: UserFormData) => {
+    // マウント状態の参照（アンマウント後に非同期処理が続行するのを防ぐ）
+    const isMountedRef = useRef(true);
+    useEffect(() => {
+        isMountedRef.current = true;
+        return () => {
+            isMountedRef.current = false;
+        };
+    }, []);
+
+    // 即時の多重送信を防ぐための ref（state 更新は非同期なので ref を使う）
+    const isSubmittingRef = useRef(false);
+    const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    const handleFormSubmit = (data: UserFormData) => {
+        // 実際に送信処理が走っていれば新しい要求は無視
+        if (isSubmittingRef.current) return;
+
+        // 既存のタイマーをクリアして最新の data でスケジュール
+        if (saveTimeoutRef.current) {
+            clearTimeout(saveTimeoutRef.current);
+        }
+
+        // UI はスケジュール時点で送信中表示にする
         setIsSubmitting(true);
 
-        try {
-            await onSubmit(data);
-        } catch (error) {
-            // エラーをtoastで表示
-            const errorMessage =
-                error instanceof Error
-                    ? error.message
-                    : "予期しないエラーが発生しました";
-            toast.error(errorMessage);
-        } finally {
-            setIsSubmitting(false);
-        }
+        saveTimeoutRef.current = setTimeout(async () => {
+            // 実際の送信を開始
+            isSubmittingRef.current = true;
+
+            try {
+                if (!isMountedRef.current) return;
+                await onSubmit(data);
+            } catch (error) {
+                const errorMessage =
+                    error instanceof Error
+                        ? error.message
+                        : "予期しないエラーが発生しました";
+                toast.error(errorMessage);
+            } finally {
+                if (isMountedRef.current) {
+                    setIsSubmitting(false);
+                }
+                isSubmittingRef.current = false;
+                if (saveTimeoutRef.current) {
+                    clearTimeout(saveTimeoutRef.current);
+                    saveTimeoutRef.current = null;
+                }
+            }
+        }, 500);
     };
+
+    // アンマウント時にタイマーをクリア
+    useEffect(() => {
+        return () => {
+            if (saveTimeoutRef.current) {
+                clearTimeout(saveTimeoutRef.current);
+                saveTimeoutRef.current = null;
+            }
+            isSubmittingRef.current = false;
+        };
+    }, []);
 
     // Ctrl/Cmd+S で保存するショートカットを追加
     useEffect(() => {
@@ -604,8 +649,10 @@ export function UserForm({
                             </Button>
                         )}
                         <Button type="submit" disabled={isSubmitting}>
-                            {isSubmitting && (
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            {isSubmitting ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                                <Save className="h-4 w-4" />
                             )}
                             {submitLabel ||
                                 (mode === "create" ? "作成" : "更新")}

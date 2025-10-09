@@ -201,7 +201,10 @@ export function TipTapEditor({
         <>
             <div className={cn("border rounded-md", className)}>
                 {editor && (
-                    <div className="sticky top-0 z-50 bg-background">
+                    <div
+                        className="sticky z-10 bg-background/60 backdrop-blur-md shadow-lg border-l border-r"
+                        style={{ top: 72 }}
+                    >
                         <TipTapToolbar
                             editor={editor}
                             onImageClick={() => setMediaPickerOpen(true)}

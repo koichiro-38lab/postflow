@@ -46,7 +46,7 @@ import {
     PaginationItem,
     PaginationLink,
 } from "@/components/ui/pagination";
-import { Pencil, ChevronLeft, ChevronRight } from "lucide-react";
+import { Pencil, ChevronLeft, ChevronRight, UserPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ユーザー情報とアバター情報を組み合わせた型
@@ -254,7 +254,8 @@ export default function UsersPage() {
         <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
             <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
                 <h1 className="text-2xl font-bold">ユーザー管理</h1>
-                <Button asChild>
+                <Button>
+                    <UserPlus className="h-4 w-4" />
                     <Link href="/admin/users/create">新規ユーザー作成</Link>
                 </Button>
             </div>
@@ -390,7 +391,23 @@ export default function UsersPage() {
                             </TableRow>
                         ) : (
                             users.map((user) => (
-                                <TableRow key={user.id}>
+                                <TableRow
+                                    key={user.id}
+                                    onClick={
+                                        currentUserId === user.id
+                                            ? undefined
+                                            : () =>
+                                                  router.push(
+                                                      `/admin/users/${user.id}/edit`
+                                                  )
+                                    }
+                                    className={
+                                        currentUserId === user.id
+                                            ? ""
+                                            : "cursor-pointer"
+                                    }
+                                    aria-disabled={currentUserId === user.id}
+                                >
                                     <TableCell>{user.id}</TableCell>
                                     <TableCell>
                                         <Avatar className="h-12 w-12">

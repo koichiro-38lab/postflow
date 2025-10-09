@@ -3,7 +3,7 @@
 import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useRef } from "react";
 
-import type { ToastProps } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import {
     registerMedia,
     requestMediaUpload,
@@ -26,7 +26,6 @@ interface UseMediaUploaderOptions {
     setItems: Dispatch<SetStateAction<MediaListItem[]>>;
     setListError: Dispatch<SetStateAction<string | null>>;
     setHasMore: Dispatch<SetStateAction<boolean>>;
-    toast: (props: ToastProps) => void;
     requestUpload?: typeof requestMediaUpload;
     uploadObject?: typeof uploadMediaObject;
     register?: typeof registerMedia;
@@ -41,7 +40,6 @@ export function useMediaUploader({
     setItems,
     setListError,
     setHasMore,
-    toast,
     requestUpload = requestMediaUpload,
     uploadObject = uploadMediaObject,
     register = registerMedia,
@@ -166,10 +164,8 @@ export function useMediaUploader({
                     error: message,
                     progress: 100,
                 }));
-                toast({
-                    title: "アップロードに失敗しました",
+                toast.error("アップロードに失敗しました", {
                     description: message,
-                    variant: "destructive",
                 });
             }
         },
@@ -179,7 +175,6 @@ export function useMediaUploader({
             setHasMore,
             setItems,
             setListError,
-            toast,
             updateTransientItem,
             uploadObject,
         ]

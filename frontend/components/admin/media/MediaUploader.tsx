@@ -84,7 +84,9 @@ export function MediaUploader({
                     />
                 </div>
                 <div className="space-y-1">
-                    <p className="text-sm font-medium">ファイルをドロップ</p>
+                    <p className="text-sm font-medium text-left">
+                        ファイルをドロップ
+                    </p>
                     <p className="text-xs text-muted-foreground">
                         またはボタンから選択できます（最大 {maxSizeInMb}MB）
                     </p>

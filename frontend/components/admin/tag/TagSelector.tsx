@@ -98,6 +98,7 @@ interface TagSelectorProps {
     onChange: (tagIds: number[]) => void;
     onTagCreated?: (tag: TagSummary) => void;
     isLoading?: boolean;
+    allowCreate?: boolean; // 新規タグ作成を許可するかどうか
 }
 
 export function TagSelector({
@@ -106,6 +107,7 @@ export function TagSelector({
     onChange,
     onTagCreated,
     isLoading = false,
+    allowCreate = true, // デフォルトは許可
 }: TagSelectorProps) {
     const [newTagName, setNewTagName] = useState("");
     const [isCreating, setIsCreating] = useState(false);
@@ -201,32 +203,37 @@ export function TagSelector({
             )}
 
             {/* 新規タグ作成 */}
-            <div className="flex gap-2 pt-4">
-                <Input
-                    placeholder="新規タグ名"
-                    value={newTagName}
-                    onChange={(e) => setNewTagName(e.target.value)}
-                    onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                            e.preventDefault();
-                            handleCreateTag();
-                        }
-                    }}
-                    className="flex-1"
-                    disabled={isLoading || isCreating}
-                />
-                <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleCreateTag}
-                    disabled={!newTagName.trim() || isLoading || isCreating}
-                >
-                    <Plus
-                        className={cn("h-4 w-4", isCreating && "animate-spin")}
+            {allowCreate && (
+                <div className="flex gap-2 pt-4">
+                    <Input
+                        placeholder="新規タグ名"
+                        value={newTagName}
+                        onChange={(e) => setNewTagName(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                                e.preventDefault();
+                                handleCreateTag();
+                            }
+                        }}
+                        className="flex-1"
+                        disabled={isLoading || isCreating}
                     />
-                </Button>
-            </div>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleCreateTag}
+                        disabled={!newTagName.trim() || isLoading || isCreating}
+                    >
+                        <Plus
+                            className={cn(
+                                "h-4 w-4",
+                                isCreating && "animate-spin"
+                            )}
+                        />
+                    </Button>
+                </div>
+            )}
         </div>
     );
 }
