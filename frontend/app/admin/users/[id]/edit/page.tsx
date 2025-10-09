@@ -66,9 +66,6 @@ export default function EditUserPage() {
 
             // 成功通知
             toast.success("ユーザー情報を更新しました");
-
-            // ユーザー一覧へリダイレクト
-            router.push("/admin/users");
         } catch (error) {
             console.error("Failed to update user:", error);
             throw new Error("ユーザー情報の更新に失敗しました");
@@ -79,7 +76,7 @@ export default function EditUserPage() {
         return (
             <div className="container mx-auto py-8">
                 <div className="flex items-center justify-center">
-                    <div className="text-center">読み込み中...</div>
+                    <div className="text-center"></div>
                 </div>
             </div>
         );
