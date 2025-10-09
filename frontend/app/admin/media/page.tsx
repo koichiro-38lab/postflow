@@ -2,23 +2,14 @@
 
 import { MediaDetailDialog } from "@/components/admin/media/MediaDetailDialog";
 import { MediaListSection } from "@/components/admin/media/MediaListSection";
-import { MediaUploader } from "@/components/MediaUploader";
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
+import { MediaUploader } from "@/components/admin/media/MediaUploader";
+import { Card, CardContent } from "@/components/ui/card";
 import { useMediaDetail } from "@/features/admin/media/hooks/use-media-detail";
 import { useMediaLibrary } from "@/features/admin/media/hooks/use-media-library";
 import { useMediaUploader } from "@/features/admin/media/hooks/use-media-uploader";
 import { buildMediaUrl } from "@/lib/media-url";
-import { useToast } from "@/hooks/use-toast";
 
 export default function AdminMediaPage() {
-    const { toast } = useToast();
-
     const {
         items,
         setItems,
@@ -36,7 +27,6 @@ export default function AdminMediaPage() {
         setItems,
         setListError,
         setHasMore,
-        toast,
     });
 
     const {
@@ -59,19 +49,15 @@ export default function AdminMediaPage() {
         confirmDeleteDetail,
     } = useMediaDetail({
         setItems,
-        toast,
     });
 
     return (
         <>
-            <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+            <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+                <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+                    <h1 className="text-2xl font-bold">メディア</h1>
+                </div>
                 <Card className="overflow-hidden">
-                    <CardHeader className="border-b bg-muted/10">
-                        <CardTitle>メディアライブラリ</CardTitle>
-                        <CardDescription>
-                            メディアファイルをアップロードし、公開・管理画面で利用できるようにします。
-                        </CardDescription>
-                    </CardHeader>
                     <CardContent className="space-y-6 py-6">
                         <MediaUploader
                             onFilesAccepted={handleFilesAccepted}

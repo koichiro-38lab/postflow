@@ -13,7 +13,7 @@ export type UserRole = "ADMIN" | "EDITOR" | "AUTHOR";
 
 export interface MediaCreatedBy {
     id: number;
-    email: string;
+    displayName: string;
     role: UserRole;
 }
 

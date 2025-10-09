@@ -3,7 +3,7 @@
 import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import type { ToastProps } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import {
     deleteMedia as deleteMediaRequest,
     fetchMediaDetail,
@@ -16,7 +16,6 @@ import type { MediaListItem, SucceededMediaItem } from "../types";
 
 interface UseMediaDetailOptions {
     setItems: Dispatch<SetStateAction<MediaListItem[]>>;
-    toast: (props: ToastProps) => void;
     fetchDetail?: typeof fetchMediaDetail;
     fetchDownloadUrl?: typeof fetchMediaDownloadUrl;
     deleteMedia?: typeof deleteMediaRequest;
@@ -44,7 +43,6 @@ interface UseMediaDetailResult {
 
 export function useMediaDetail({
     setItems,
-    toast,
     fetchDetail = fetchMediaDetail,
     fetchDownloadUrl = fetchMediaDownloadUrl,
     deleteMedia = deleteMediaRequest,
@@ -153,10 +151,8 @@ export function useMediaDetail({
         }
         const url = detailPublicUrl;
         if (!url) {
-            toast({
-                title: "URLをコピーできません",
+            toast.error("URLをコピーできません", {
                 description: "公開URLが設定されていません",
-                variant: "destructive",
             });
             return;
         }
@@ -165,21 +161,18 @@ export function useMediaDetail({
             if (!copied) {
                 throw new Error("クリップボードへコピーできませんでした");
             }
-            toast({
-                title: "URLをコピーしました",
+            toast.success("URLをコピーしました", {
                 description: url,
             });
         } catch (error) {
-            toast({
-                title: "URLのコピーに失敗しました",
+            toast.error("URLのコピーに失敗しました", {
                 description:
                     error instanceof Error
                         ? error.message
                         : "クリップボードの操作に失敗しました",
-                variant: "destructive",
             });
         }
-    }, [detailMedia, detailPublicUrl, toast]);
+    }, [detailMedia, detailPublicUrl]);
 
     // ダウンロード用の一時 URL を取得してブラウザで開く
     const downloadDetail = useCallback(async () => {
@@ -193,18 +186,16 @@ export function useMediaDetail({
                 window.open(downloadUrl, "_blank", "noopener,noreferrer");
             }
         } catch (error) {
-            toast({
-                title: "ダウンロードURLの取得に失敗しました",
+            toast.error("ダウンロードURLの取得に失敗しました", {
                 description:
                     error instanceof Error
                         ? error.message
                         : "ダウンロード処理で予期せぬ問題が発生しました",
-                variant: "destructive",
             });
         } finally {
             setDownloadLoading(false);
         }
-    }, [detailMedia, fetchDownloadUrl, toast]);
+    }, [detailMedia, fetchDownloadUrl]);
 
     // 削除確認ダイアログを開く
     const requestDeleteDetail = useCallback(() => {
@@ -236,25 +227,22 @@ export function useMediaDetail({
                         )
                 )
             );
-            toast({
-                title: "メディアを削除しました",
+            toast.success("メディアを削除しました", {
                 description: detailMedia.filename,
             });
             closeDetail();
         } catch (error) {
-            toast({
-                title: "メディアの削除に失敗しました",
+            toast.error("メディアの削除に失敗しました", {
                 description:
                     error instanceof Error
                         ? error.message
                         : "削除処理で予期せぬ問題が発生しました",
-                variant: "destructive",
             });
         } finally {
             setDeleteLoading(false);
             setDeleteConfirmOpen(false);
         }
-    }, [closeDetail, deleteMedia, detailMedia, setItems, toast]);
+    }, [closeDetail, deleteMedia, detailMedia, setItems]);
 
     // モーダルを閉じたときに削除確認ダイアログもリセット
     useEffect(() => {

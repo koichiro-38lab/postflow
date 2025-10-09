@@ -22,6 +22,7 @@ export interface MediaListProps {
     onItemClick?: (item: SucceededMediaItem) => void;
     selectionMode?: boolean;
     selectedItemId?: number | null;
+    showLoadMoreSpinner?: boolean;
 }
 
 export function MediaList({
@@ -31,6 +32,7 @@ export function MediaList({
     onItemClick,
     selectionMode = false,
     selectedItemId = null,
+    showLoadMoreSpinner = false,
 }: MediaListProps) {
     // アイテムを安定したキーで描画
     return (
@@ -53,6 +55,17 @@ export function MediaList({
                     </li>
                 );
             })}
+            {showLoadMoreSpinner && (
+                <li className="flex justify-center py-4">
+                    <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                        <Loader2
+                            className="h-5 w-5 animate-spin"
+                            aria-hidden="true"
+                        />
+                        <span className="sr-only">読み込み中...</span>
+                    </span>
+                </li>
+            )}
         </ul>
     );
 }
