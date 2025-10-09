@@ -63,13 +63,7 @@ export default function ProfilePage() {
     };
 
     if (loading) {
-        return (
-            <div className="container mx-auto py-8">
-                <div className="flex items-center justify-center">
-                    <div className="text-center">読み込み中...</div>
-                </div>
-            </div>
-        );
+        return <div className="container mx-auto py-8"></div>;
     }
 
     if (!profile) {
