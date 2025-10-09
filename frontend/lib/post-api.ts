@@ -37,6 +37,17 @@ export interface Tag {
     updatedAt: string;
 }
 
+export interface CoverMediaSummary {
+    id: number;
+    storageKey: string;
+    publicUrl: string | null;
+}
+
+export interface AuthorSummary {
+    id: number;
+    displayName: string;
+}
+
 export interface Post {
     id: string;
     title: string;
@@ -45,7 +56,8 @@ export interface Post {
     category: CategorySummary | null;
     tags?: TagSummary[];
     status: string;
-    // 必要に応じて他のフィールドも追加
+    coverMedia?: CoverMediaSummary | null;
+    author?: AuthorSummary | null;
 }
 
 export interface PostsResponse {
