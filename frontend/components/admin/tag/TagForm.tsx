@@ -72,18 +72,16 @@ export function TagForm({ tag, onSuccess, onDelete }: TagFormProps) {
             if (tag) {
                 // 更新
                 await updateTag(tag.id, request);
-                toast.success("タグを更新しました。");
+                toast.success("タグを更新しました");
             } else {
                 // 作成
                 await createTag(request);
-                toast.success("タグを作成しました。");
+                toast.success("タグを作成しました");
             }
             onSuccess();
         } catch {
             toast.error(
-                tag
-                    ? "タグの更新に失敗しました。"
-                    : "タグの作成に失敗しました。"
+                tag ? "タグの更新に失敗しました" : "タグの作成に失敗しました"
             );
         } finally {
             setLoading(false);
@@ -137,7 +135,7 @@ export function TagForm({ tag, onSuccess, onDelete }: TagFormProps) {
                         disabled={loading}
                         className="ml-auto"
                     >
-                        {loading ? "保存中..." : tag ? "更新" : "作成"}
+                        {tag ? "更新" : "作成"}
                     </Button>
                 </div>
             </form>
