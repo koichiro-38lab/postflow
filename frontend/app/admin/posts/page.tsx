@@ -4,6 +4,7 @@ import * as React from "react";
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import {
     fetchPosts,
     PostsResponse,
@@ -13,7 +14,7 @@ import {
 import { buildCategoryTree, CategoryWithLevel } from "@/lib/category-utils";
 import { isApiError } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
-import { TagBadge } from "@/components/TagBadge";
+import { buildMediaUrl } from "@/lib/media-url";
 import { cn } from "@/lib/utils";
 import {
     Table,
@@ -33,6 +34,8 @@ import {
     FileText,
     Eye,
     Archive,
+    Pencil,
+    Pen,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -50,7 +53,13 @@ import {
     PaginationLink,
 } from "@/components/ui/pagination";
 
-type SortField = "title" | "slug" | "publishedAt" | "category" | "status";
+type SortField =
+    | "title"
+    | "slug"
+    | "author"
+    | "publishedAt"
+    | "category"
+    | "status";
 type SortDirection = "asc" | "desc";
 
 function AdminPostsPageContent() {
@@ -294,24 +303,30 @@ function AdminPostsPageContent() {
 
     // スケルトンローコンポーネント
     const SkeletonRow = () => (
-        <TableRow className="h-12">
-            <TableCell>
-                <Skeleton className="h-4 w-2/3" /> {/* タイトル: 可変幅 */}
+        <TableRow className="h-16">
+            <TableCell className="w-20">
+                <Skeleton className="h-12 w-16" />
             </TableCell>
-            <TableCell>
-                <Skeleton className="h-4 w-2/3" /> {/* カテゴリー: 可変幅 */}
+            <TableCell className="w-[300px]">
+                <Skeleton className="h-4 w-full" />
             </TableCell>
-            <TableCell>
-                <Skeleton className="h-4 w-2/3" /> {/* タグ: 可変幅 */}
+            <TableCell className="w-32">
+                <Skeleton className="h-4 w-20" />
             </TableCell>
-            <TableCell>
-                <Skeleton className="h-4 w-2/3" /> {/* ステータス: 可変幅 */}
+            <TableCell className="w-28">
+                <Skeleton className="h-4 w-20" />
             </TableCell>
-            <TableCell>
-                <Skeleton className="h-4 w-2/3" /> {/* スラッグ: 可変幅 */}
+            <TableCell className="w-28">
+                <Skeleton className="h-4 w-20" />
             </TableCell>
-            <TableCell>
-                <Skeleton className="h-4 w-2/3" /> {/* 公開日: 可変幅 */}
+            <TableCell className="w-40">
+                <Skeleton className="h-4 w-32" />
+            </TableCell>
+            <TableCell className="w-40">
+                <Skeleton className="h-4 w-32" />
+            </TableCell>
+            <TableCell className="w-20">
+                <Skeleton className="h-4 w-12" />
             </TableCell>
         </TableRow>
     );
@@ -321,7 +336,10 @@ function AdminPostsPageContent() {
             <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
                 <h1 className="text-2xl font-bold">記事一覧</h1>
                 <Link href="/admin/posts/new">
-                    <Button>新規作成</Button>
+                    <Button>
+                        <Pencil className="h-4 w-4" />
+                        新規作成
+                    </Button>
                 </Link>
             </div>
 
@@ -408,10 +426,11 @@ function AdminPostsPageContent() {
             {error && <div className="text-red-500 mb-4">{error}</div>}
 
             <div className="rounded-md border">
-                <Table className="min-w-[900px] table-auto">
+                <Table className="min-w-[1200px] table-fixed">
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="w-2/5">
+                            <TableHead className="w-20"></TableHead>
+                            <TableHead className="w-[300px]">
                                 <Button
                                     variant="ghost"
                                     onClick={() => handleSort("title")}
@@ -421,7 +440,7 @@ function AdminPostsPageContent() {
                                     {getSortIcon("title")}
                                 </Button>
                             </TableHead>
-                            <TableHead className="w-1/8">
+                            <TableHead className="w-32">
                                 <Button
                                     variant="ghost"
                                     onClick={() => handleSort("category")}
@@ -431,8 +450,7 @@ function AdminPostsPageContent() {
                                     {getSortIcon("category")}
                                 </Button>
                             </TableHead>
-                            <TableHead className="w-1/6">タグ</TableHead>
-                            <TableHead className="w-1/8">
+                            <TableHead className="w-28">
                                 <Button
                                     variant="ghost"
                                     onClick={() => handleSort("status")}
@@ -442,7 +460,17 @@ function AdminPostsPageContent() {
                                     {getSortIcon("status")}
                                 </Button>
                             </TableHead>
-                            <TableHead className="w-1/6">
+                            <TableHead className="w-28">
+                                <Button
+                                    variant="ghost"
+                                    onClick={() => handleSort("author")}
+                                    className="h-auto p-0 font-semibold hover:bg-transparent"
+                                >
+                                    投稿者
+                                    {getSortIcon("author")}
+                                </Button>
+                            </TableHead>
+                            <TableHead className="w-40">
                                 <Button
                                     variant="ghost"
                                     onClick={() => handleSort("slug")}
@@ -452,7 +480,7 @@ function AdminPostsPageContent() {
                                     {getSortIcon("slug")}
                                 </Button>
                             </TableHead>
-                            <TableHead className="w-1/8">
+                            <TableHead className="w-40">
                                 <Button
                                     variant="ghost"
                                     onClick={() => handleSort("publishedAt")}
@@ -462,6 +490,7 @@ function AdminPostsPageContent() {
                                     {getSortIcon("publishedAt")}
                                 </Button>
                             </TableHead>
+                            <TableHead className="w-20"></TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -470,90 +499,121 @@ function AdminPostsPageContent() {
                                 (_, index) => <SkeletonRow key={index} />
                             )
                         ) : posts.length === 0 ? (
-                            <TableRow className="h-12">
+                            <TableRow className="h-1">
                                 <TableCell
-                                    colSpan={6}
+                                    colSpan={8}
                                     className="text-center py-8 text-muted-foreground"
                                 >
                                     記事がありません。
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            posts.map((post) => (
-                                <TableRow
-                                    key={post.id}
-                                    className="h-12 cursor-pointer hover:bg-muted/50"
-                                    onClick={() =>
-                                        router.push(
-                                            `/admin/posts/${post.id}/edit`
-                                        )
-                                    }
-                                >
-                                    <TableCell className="font-medium whitespace-nowrap">
-                                        {post.title}
-                                    </TableCell>
-                                    <TableCell className="whitespace-nowrap">
-                                        {post.category?.name || "未設定"}
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex flex-wrap gap-1">
-                                            {post.tags &&
-                                            post.tags.length > 0 ? (
-                                                post.tags.map((tag) => (
-                                                    <TagBadge
-                                                        key={tag.id}
-                                                        tag={tag}
-                                                        clickable={false}
+                            posts.map((post) => {
+                                // アイキャッチ画像のURLを生成
+                                const coverImageUrl = post.coverMedia
+                                    ? post.coverMedia.publicUrl ||
+                                      buildMediaUrl(post.coverMedia.storageKey)
+                                    : null;
+
+                                return (
+                                    <TableRow
+                                        key={post.id}
+                                        className="h-12 cursor-pointer hover:bg-muted/50"
+                                        onClick={() =>
+                                            router.push(
+                                                `/admin/posts/${post.id}/edit`
+                                            )
+                                        }
+                                    >
+                                        <TableCell className="w-20 py-2">
+                                            {coverImageUrl ? (
+                                                <div className="relative w-16 h-12 rounded overflow-hidden bg-muted">
+                                                    <Image
+                                                        src={coverImageUrl}
+                                                        alt={post.title}
+                                                        fill
+                                                        className="object-cover"
+                                                        sizes="64px"
                                                     />
-                                                ))
+                                                </div>
                                             ) : (
-                                                <span className="text-muted-foreground text-xs">
-                                                    —
-                                                </span>
+                                                <div className="w-16 h-12 rounded bg-muted flex items-center justify-center">
+                                                    <FileText className="h-4 w-4 text-muted-foreground" />
+                                                </div>
                                             )}
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="whitespace-nowrap">
-                                        <div className="flex items-center gap-1">
-                                            {post.status === "DRAFT" && (
-                                                <span className="flex items-center border gap-1 px-2 py-1 rounded-lg text-xs">
-                                                    <FileText className="h-4 w-4 text-gray-500" />
-                                                    下書き
-                                                </span>
-                                            )}
-                                            {post.status === "PUBLISHED" && (
-                                                <span className="flex items-center border gap-1 px-2 py-1 rounded-lg text-xs">
-                                                    <Eye className="h-4 w-4 text-green-600" />
-                                                    公開済み
-                                                </span>
-                                            )}
-                                            {post.status === "ARCHIVED" && (
-                                                <span className="flex items-center border gap-1 px-2 py-1 rounded-lg text-xs">
-                                                    <Archive className="h-4 w-4 text-orange-600" />
-                                                    アーカイブ
-                                                </span>
-                                            )}
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="whitespace-nowrap">
-                                        {post.slug}
-                                    </TableCell>
-                                    <TableCell className="whitespace-nowrap">
-                                        {post.publishedAt
-                                            ? new Date(
-                                                  post.publishedAt
-                                              ).toLocaleString("ja-JP", {
-                                                  year: "numeric",
-                                                  month: "2-digit",
-                                                  day: "2-digit",
-                                                  hour: "2-digit",
-                                                  minute: "2-digit",
-                                                  timeZone: "Asia/Tokyo",
-                                              })
-                                            : "-"}
-                                    </TableCell>
-                                </TableRow>
-                            ))
+                                        </TableCell>
+                                        <TableCell className="w-[300px] font-medium">
+                                            <span className="block overflow-hidden text-ellipsis whitespace-nowrap">
+                                                {post.title}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell className="w-32 whitespace-nowrap overflow-hidden text-ellipsis">
+                                            {post.category?.name || "未設定"}
+                                        </TableCell>
+                                        <TableCell className="w-28">
+                                            <div className="flex items-center gap-1">
+                                                {post.status === "DRAFT" && (
+                                                    <span className="flex items-center border gap-1 px-2 py-1 rounded-lg text-xs">
+                                                        <FileText className="h-4 w-4 text-gray-500" />
+                                                        下書き
+                                                    </span>
+                                                )}
+                                                {post.status ===
+                                                    "PUBLISHED" && (
+                                                    <span className="flex items-center border gap-1 px-2 py-1 rounded-lg text-xs">
+                                                        <Eye className="h-4 w-4 text-green-600" />
+                                                        公開済み
+                                                    </span>
+                                                )}
+                                                {post.status === "ARCHIVED" && (
+                                                    <span className="flex items-center border gap-1 px-2 py-1 rounded-lg text-xs">
+                                                        <Archive className="h-4 w-4 text-orange-600" />
+                                                        アーカイブ
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="w-28 whitespace-nowrap overflow-hidden text-ellipsis">
+                                            {post.author?.displayName ||
+                                                "未設定"}
+                                        </TableCell>
+                                        <TableCell className="w-40 whitespace-nowrap overflow-hidden text-ellipsis">
+                                            {post.slug}
+                                        </TableCell>
+                                        <TableCell className="w-40 whitespace-nowrap">
+                                            {post.publishedAt
+                                                ? new Date(
+                                                      post.publishedAt
+                                                  ).toLocaleString("ja-JP", {
+                                                      year: "numeric",
+                                                      month: "2-digit",
+                                                      day: "2-digit",
+                                                      hour: "2-digit",
+                                                      minute: "2-digit",
+                                                      timeZone: "Asia/Tokyo",
+                                                  })
+                                                : "-"}
+                                        </TableCell>
+                                        <TableCell className="w-20">
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                asChild
+                                                onClick={(e) =>
+                                                    e.stopPropagation()
+                                                }
+                                            >
+                                                <Link
+                                                    href={`/admin/posts/${post.id}/edit`}
+                                                >
+                                                    <Pencil className="h-4 w-4" />
+                                                    編集
+                                                </Link>
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })
                         )}
                     </TableBody>
                 </Table>

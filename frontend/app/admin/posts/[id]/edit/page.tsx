@@ -1,6 +1,6 @@
 "use client";
 
-import PostForm, { PostFormData } from "../../PostForm";
+import PostForm, { PostFormData } from "@/components/admin/post/PostForm";
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import api from "@/lib/api";
@@ -26,6 +26,7 @@ export default function EditPostPage() {
     const [initialCoverPreviewUrl, setInitialCoverPreviewUrl] = useState<
         string | null
     >(null);
+    const [initialAuthorName, setInitialAuthorName] = useState<string>("");
 
     // 記事データを取得
     useEffect(() => {
@@ -36,6 +37,11 @@ export default function EditPostPage() {
                     `${API_BASE_URL}/api/admin/posts/${params.id}`
                 );
                 const post = res.data;
+
+                // 投稿者名を設定
+                setInitialAuthorName(
+                    post.author?.displayName || post.author?.username || "不明"
+                );
                 setInitialData({
                     title: post.title,
                     slug: post.slug,
@@ -91,6 +97,7 @@ export default function EditPostPage() {
             initialData={initialData}
             initialCoverMediaId={initialCoverMediaId}
             initialCoverPreviewUrl={initialCoverPreviewUrl}
+            initialAuthorName={initialAuthorName}
         />
     );
 }
