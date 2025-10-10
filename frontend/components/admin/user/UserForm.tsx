@@ -139,6 +139,9 @@ export function UserForm({
         existingUser !== undefined &&
         existingUser.id === currentUserId;
 
+    // パスワード欄の表示可否
+    const canEditPassword = !isOwnProfile;
+
     // モードに応じたスキーマ選択
     const schema =
         mode === "create" ? createUserFormSchema : updateUserFormSchema;
@@ -545,53 +548,59 @@ export function UserForm({
                             )}
 
                             {/* パスワード */}
-                            <FormField
-                                control={form.control}
-                                name="password"
-                                render={({ field }) => (
-                                    <FormItem className="mb-4">
-                                        <FormLabel>
-                                            パスワード
-                                            {mode === "update" && (
-                                                <span className="text-sm text-gray-500 ml-2">
-                                                    （変更する場合のみ入力）
-                                                </span>
-                                            )}
-                                        </FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                type="password"
-                                                placeholder={
-                                                    mode === "create"
-                                                        ? "パスワードを入力"
-                                                        : "新しいパスワード（任意）"
-                                                }
-                                                {...field}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                            {canEditPassword && (
+                                <>
+                                    <FormField
+                                        control={form.control}
+                                        name="password"
+                                        render={({ field }) => (
+                                            <FormItem className="mb-4">
+                                                <FormLabel>
+                                                    パスワード
+                                                    {mode === "update" && (
+                                                        <span className="text-sm text-gray-500 ml-2">
+                                                            （変更する場合のみ入力）
+                                                        </span>
+                                                    )}
+                                                </FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        type="password"
+                                                        placeholder={
+                                                            mode === "create"
+                                                                ? "パスワードを入力"
+                                                                : "新しいパスワード（任意）"
+                                                        }
+                                                        {...field}
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
 
-                            {/* パスワード確認 */}
-                            <FormField
-                                control={form.control}
-                                name="confirmPassword"
-                                render={({ field }) => (
-                                    <FormItem className="mb-4">
-                                        <FormLabel>パスワード確認</FormLabel>
-                                        <FormControl>
-                                            <Input
-                                                type="password"
-                                                placeholder="パスワードを再入力"
-                                                {...field}
-                                            />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+                                    {/* パスワード確認 */}
+                                    <FormField
+                                        control={form.control}
+                                        name="confirmPassword"
+                                        render={({ field }) => (
+                                            <FormItem className="mb-4">
+                                                <FormLabel>
+                                                    パスワード確認
+                                                </FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        type="password"
+                                                        placeholder="パスワードを再入力"
+                                                        {...field}
+                                                    />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </>
+                            )}
                         </div>
 
                         <div>
