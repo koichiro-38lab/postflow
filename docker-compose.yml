@@ -28,6 +28,7 @@ services:
         ports:
             - "8100:8080"
         environment:
+            - BASE_URL=${BASE_URL}
             - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
             - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
             - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
@@ -36,6 +37,7 @@ services:
             - S3_BUCKET=${S3_BUCKET}
             - S3_ACCESS_KEY=${S3_ACCESS_KEY}
             - S3_SECRET_KEY=${S3_SECRET_KEY}
+            - S3_PUBLIC_BASE_URL=${S3_PUBLIC_BASE_URL}
             - APP_MEDIA_USE_IN_MEMORY=${APP_MEDIA_USE_IN_MEMORY}
             - APP_MEDIA_KEY_PREFIX=${APP_MEDIA_KEY_PREFIX}
             - JWT_SECRET=${JWT_SECRET}
