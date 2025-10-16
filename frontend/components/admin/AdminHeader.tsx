@@ -173,7 +173,7 @@ export default function AdminHeader() {
 
                         <Link href="/admin">
                             <span className="text-2xl font-bold text-foreground cursor-pointer">
-                                PostFlow{" "}
+                                {process.env.NEXT_PUBLIC_SITE_NAME}{" "}
                                 <span className="text-sm text-muted-foreground">
                                     Admin
                                 </span>
