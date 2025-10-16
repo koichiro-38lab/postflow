@@ -1,0 +1,52 @@
+/**
+ * TipTap エディタの共通スタイル
+ *
+ * 使用方法:
+ * import "@/lib/tiptap/styles.css";
+ *
+ * このスタイルは管理画面と公開画面の両方で使用される
+ * MediaImage 拡張機能の画像サイズとアライメントを定義
+ */
+
+/* Media Image サイズ */
+.tiptap-figure {
+    margin: 1.5rem 0;
+}
+
+.tiptap-figure.size-sm img {
+    width: 40%;
+    height: auto;
+}
+
+.tiptap-figure.size-md img {
+    width: 60%;
+    height: auto;
+}
+
+.tiptap-figure.size-lg img {
+    width: 100%;
+    height: auto;
+}
+
+.tiptap-figure.size-full img {
+    width: 100%;
+    height: auto;
+}
+
+/* Media Image アライメント */
+.tiptap-figure.align-left img {
+    display: block;
+    margin-right: auto;
+    margin-left: 0;
+}
+
+.tiptap-figure.align-center img {
+    display: block;
+    margin: 0 auto;
+}
+
+.tiptap-figure.align-right img {
+    display: block;
+    margin-left: auto;
+    margin-right: 0;
+}
