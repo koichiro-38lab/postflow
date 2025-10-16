@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -62,6 +62,14 @@ function getInitials(displayName: string | null, email: string): string {
 }
 
 export default function UsersPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <UsersPageContent />
+        </Suspense>
+    );
+}
+
+function UsersPageContent() {
     // URLパラメーターから初期値を設定
     const router = useRouter();
     const searchParams = useSearchParams();
