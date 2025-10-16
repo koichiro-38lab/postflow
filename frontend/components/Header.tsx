@@ -28,7 +28,7 @@ export default function Header() {
                 <div className="flex justify-between items-center py-6">
                     <Link href="/">
                         <span className="text-3xl font-bold text-foreground cursor-pointer">
-                            PostFlow
+                            {process.env.NEXT_PUBLIC_SITE_NAME}
                         </span>
                     </Link>
                     <div className="flex items-center gap-2">

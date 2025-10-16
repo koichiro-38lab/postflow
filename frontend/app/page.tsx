@@ -1,88 +1,134 @@
-"use client";
+import Link from "next/link";
+import { getPublicPosts, getPublicCategories } from "@/lib/api/public";
+import { PostCard } from "@/components/public/PostCard";
+import { Button } from "@/components/ui/button";
+import { ArrowRight, BookOpen } from "lucide-react";
+import type { Metadata } from "next";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import {
-    Card,
-    CardContent,
-    CardDescription,
-    CardHeader,
-    CardTitle,
-} from "@/components/ui/card";
-import { useAuthStore } from "@/lib/auth-store";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import { PublicHeader } from "@/components/public/PublicHeader";
+import { PublicFooter } from "@/components/public/PublicFooter";
+import Background from "@/components/ui/background";
 
-export default function Home() {
-    const router = useRouter();
-    const { accessToken } = useAuthStore();
+export const metadata: Metadata = {
+    title: process.env.NEXT_PUBLIC_SITE_NAME || "",
+    description:
+        "最新の技術記事、プログラミングチュートリアル、開発者向け情報を発信するブログプラットフォームです。",
+};
 
-    useEffect(() => {
-        if (accessToken) {
-            router.push("/admin");
-        }
-    }, [accessToken, router]);
+export default async function HomePage() {
+    // 最新記事を取得（トップページ用に6件）
+    const postsResponse = await getPublicPosts({ size: 8 });
+    const posts = postsResponse.content;
+
+    // カテゴリを取得
+    const categories = await getPublicCategories();
+    const topLevelCategories = categories.filter((cat) => !cat.parentId);
 
     return (
-        <div className="min-h-screen bg-background flex flex-col">
-            <Header />
-            <main className="flex-1 max-w-7xl mx-auto py-6 sm:px-6 lg:px-8 w-full">
-                <div className="px-4 py-6 sm:px-0">
-                    <div className="text-center">
-                        <h2 className="text-4xl font-bold text-foreground mb-4">
-                            PostFlowへようこそ
-                        </h2>
-                        <p className="text-xl text-muted-foreground mb-8">
-                            Next.jsとSpring Bootで構築されたモダンなCMS
-                        </p>
+        <>
+            <PublicHeader />
+            <div className="min-h-screen">
+                {/* ヒーローセクション */}
+                <section
+                    className="relative h-[50vh] overflow-hidden"
+                    style={{ isolation: "isolate" }}
+                >
+                    <Background />
+                    <div
+                        className="relative flex items-center justify-center h-full"
+                        style={{ zIndex: 10 }}
+                    >
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
+                            <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-white">
+                                <span className="block mb-2">
+                                    Spring Boot × Next.js
+                                </span>
+                                <span className="block">
+                                    で構築する実践型CMS
+                                </span>
+                            </h1>
+                            <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto leading-relaxed">
+                                エンジニアのための情報発信プラットフォーム。
+                                <br className="hidden sm:block" />
+                                最新の技術トレンド、開発ノウハウ、実践的なチュートリアルをお届けします。
+                            </p>
+                        </div>
                     </div>
+                </section>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>ブログ記事</CardTitle>
-                                <CardDescription>
-                                    ブログコンテンツを作成・管理
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-sm text-muted-foreground">
-                                    リッチテキストエディタで記事を書いたり、下書きを管理したり、コンテンツを公開したりできます。
-                                </p>
-                            </CardContent>
-                        </Card>
+                {/* 最新記事セクション */}
+                <section className="py-10 md:py-10 bg-background">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="text-center mb-12">
+                            <h2 className="text-2xl md:text-3xl font-bold mb-3">
+                                最新記事
+                            </h2>
+                            <p className="text-muted-foreground">
+                                最新の技術記事をチェックしましょう
+                            </p>
+                        </div>
 
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>メディアライブラリ</CardTitle>
-                                <CardDescription>
-                                    メディアファイルをアップロード・整理
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-sm text-muted-foreground">
-                                    画像、動画、ドキュメントを自動最適化して保存します。
+                        {posts.length > 0 ? (
+                            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                                {posts.map((post) => (
+                                    <PostCard key={post.id} post={post} />
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="text-center py-16 border-2 border-dashed rounded-lg">
+                                <BookOpen className="w-12 h-12 mx-auto mb-4 text-muted-foreground/50" />
+                                <p className="text-muted-foreground text-lg mb-2">
+                                    まだ記事がありません
                                 </p>
-                            </CardContent>
-                        </Card>
-
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>カテゴリ</CardTitle>
-                                <CardDescription>
-                                    階層カテゴリでコンテンツを整理
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-sm text-muted-foreground">
-                                    ネストされたカテゴリを作成してコンテンツを効果的に構造化します。
-                                </p>
-                            </CardContent>
-                        </Card>
+                            </div>
+                        )}
+                        <div className="flex justify-end mt-3">
+                            <Button variant="ghost" asChild>
+                                <Link
+                                    href="/posts"
+                                    className="flex items-center group"
+                                >
+                                    すべての記事を見る
+                                    <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                                </Link>
+                            </Button>
+                        </div>
                     </div>
-                </div>
-            </main>
-            <Footer />
-        </div>
+                </section>
+
+                {/* カテゴリセクション */}
+                {topLevelCategories.length > 0 && (
+                    <section className="py-16 md:py-16 bg-muted/50 border-t border-b">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                            <div className="text-center mb-12">
+                                <h2 className="text-2xl md:text-3xl font-bold mb-3">
+                                    カテゴリから探す
+                                </h2>
+                                <p className="text-muted-foreground">
+                                    興味のあるトピックを見つけましょう
+                                </p>
+                            </div>
+                            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+                                {topLevelCategories.map((category) => (
+                                    <Link
+                                        key={category.id}
+                                        href={`/categories/${category.slug}`}
+                                        className="group relative bg-background border border-border hover:border-primary rounded-md p-4"
+                                    >
+                                        <div className="flex justify-between items-center">
+                                            <h3 className="text-lg group-hover:text-primary transition-colors">
+                                                {category.name}
+                                            </h3>
+                                            <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary " />
+                                        </div>
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
+                    </section>
+                )}
+            </div>
+            <PublicFooter />
+        </>
     );
 }

@@ -1,0 +1,74 @@
+import { MetadataRoute } from "next";
+import {
+    getPublicPosts,
+    getPublicCategories,
+    getPublicTags,
+} from "@/lib/api/public";
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+
+    // 全投稿を取得（最大1000件）
+    const postsResponse = await getPublicPosts({ page: 0, size: 1000 });
+    const posts = postsResponse.content;
+
+    // カテゴリとタグを取得
+    const categories = await getPublicCategories();
+    const tags = await getPublicTags();
+
+    // 投稿のサイトマップエントリ
+    const postEntries: MetadataRoute.Sitemap = posts.map((post) => ({
+        url: `${baseUrl}/posts/${post.slug}`,
+        lastModified: new Date(post.publishedAt),
+        changeFrequency: "weekly",
+        priority: 0.8,
+    }));
+
+    // カテゴリのサイトマップエントリ
+    const categoryEntries: MetadataRoute.Sitemap = categories.map(
+        (category) => ({
+            url: `${baseUrl}/posts?category=${category.slug}`,
+            lastModified: new Date(),
+            changeFrequency: "daily",
+            priority: 0.6,
+        })
+    );
+
+    // タグのサイトマップエントリ
+    const tagEntries: MetadataRoute.Sitemap = tags.map((tag) => ({
+        url: `${baseUrl}/posts?tag=${tag.slug}`,
+        lastModified: new Date(),
+        changeFrequency: "daily",
+        priority: 0.5,
+    }));
+
+    // 静的ページ
+    const staticPages: MetadataRoute.Sitemap = [
+        {
+            url: baseUrl,
+            lastModified: new Date(),
+            changeFrequency: "daily",
+            priority: 1,
+        },
+        {
+            url: `${baseUrl}/posts`,
+            lastModified: new Date(),
+            changeFrequency: "daily",
+            priority: 0.9,
+        },
+        {
+            url: `${baseUrl}/categories`,
+            lastModified: new Date(),
+            changeFrequency: "weekly",
+            priority: 0.7,
+        },
+        {
+            url: `${baseUrl}/tags`,
+            lastModified: new Date(),
+            changeFrequency: "weekly",
+            priority: 0.7,
+        },
+    ];
+
+    return [...staticPages, ...postEntries, ...categoryEntries, ...tagEntries];
+}

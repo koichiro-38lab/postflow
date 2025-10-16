@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* TipTap 共通スタイル */
+@import "@/lib/tiptap/styles.css";
+
 @layer base {
     :root {
         --background: 0 0% 100%;
@@ -77,105 +80,136 @@
         outline-offset: 0px;
     }
 
-    .tiptap-editor .ProseMirror p:last-child {
+    .tiptap-editor .ProseMirror p:last-child,
+    .prose p:last-child {
         @apply mb-0;
     }
 
-    .tiptap-editor .ProseMirror h1 {
+    .tiptap-editor .ProseMirror h1,
+    .prose h1 {
         @apply mt-8 text-3xl font-semibold leading-tight tracking-tight first:mt-0 mb-6;
     }
 
-    .tiptap-editor .ProseMirror h2 {
+    .tiptap-editor .ProseMirror h2,
+    .prose h2 {
         @apply mt-6 text-2xl font-semibold leading-snug tracking-tight first:mt-0 border-b pb-1 mb-6;
     }
 
-    .tiptap-editor .ProseMirror h3 {
+    .tiptap-editor .ProseMirror h3,
+    .prose h3 {
         @apply mt-5 text-xl font-semibold leading-snug tracking-tight first:mt-0 mb-4;
     }
 
     .tiptap-editor .ProseMirror p,
     .tiptap-editor .ProseMirror ul,
     .tiptap-editor .ProseMirror ol,
-    .tiptap-editor .ProseMirror blockquote {
+    .tiptap-editor .ProseMirror blockquote,
+    .prose p,
+    .prose ul,
+    .prose ol,
+    .prose blockquote {
         @apply mb-4 last:mb-0;
     }
 
-    .tiptap-editor .ProseMirror ul {
+    .tiptap-editor .ProseMirror ul,
+    .prose ul {
         @apply list-disc space-y-2 pl-6;
     }
 
-    .tiptap-editor .ProseMirror ol {
+    .tiptap-editor .ProseMirror ol,
+    .prose ol {
         @apply list-decimal space-y-2 pl-6;
     }
 
-    .tiptap-editor .ProseMirror blockquote {
+    .tiptap-editor .ProseMirror blockquote,
+    .prose blockquote {
         @apply rounded-md border-l-4 border-primary/40 bg-primary/5 px-4 py-3 italic text-foreground;
     }
 
-    .tiptap-editor .ProseMirror a {
+    .tiptap-editor .ProseMirror a,
+    .prose a {
         @apply text-primary underline decoration-primary/40 underline-offset-4 hover:decoration-primary;
     }
 
-    .tiptap-editor .ProseMirror code {
+    .tiptap-editor .ProseMirror code,
+    .prose code {
         @apply rounded bg-muted px-1.5 py-0.5 font-mono text-sm text-foreground;
     }
 
-    .tiptap-editor .ProseMirror pre {
+    .tiptap-editor .ProseMirror pre,
+    .prose pre {
         @apply overflow-x-auto rounded-md bg-muted px-4 py-3;
     }
 
-    .tiptap-editor .ProseMirror pre code {
+    .tiptap-editor .ProseMirror pre code,
+    .prose pre code {
         @apply block bg-transparent p-0 text-sm text-foreground;
     }
 
-    .tiptap-editor .ProseMirror table {
+    .tiptap-editor .ProseMirror table,
+    .prose table {
         @apply w-full table-auto border-collapse overflow-hidden border;
     }
 
     .tiptap-editor .ProseMirror th,
-    .tiptap-editor .ProseMirror td {
+    .tiptap-editor .ProseMirror td,
+    .prose th,
+    .prose td {
         @apply border px-3 py-2 text-left align-top;
     }
 
-    .tiptap-editor .ProseMirror th {
+    .tiptap-editor .ProseMirror th,
+    .prose th {
         @apply bg-muted font-semibold;
     }
 
+    /* TipTap 共通スタイル - proseクラス内でも適用 */
+    .prose .tiptap-figure,
     .tiptap-figure {
-        @apply my-6;
+        margin: 1.5rem 0;
     }
 
-    /* Media Image sizes */
+    .prose .tiptap-figure.size-sm img,
     .tiptap-figure.size-sm img {
         width: 40%;
         height: auto;
     }
 
+    .prose .tiptap-figure.size-md img,
     .tiptap-figure.size-md img {
         width: 60%;
         height: auto;
     }
 
+    .prose .tiptap-figure.size-lg img,
     .tiptap-figure.size-lg img {
         width: 100%;
         height: auto;
     }
-}
 
-/* media image alignment */
-.tiptap-figure.align-left img {
-    display: block;
-    margin-right: auto;
-    margin-left: 0;
-}
+    .prose .tiptap-figure.size-full img,
+    .tiptap-figure.size-full img {
+        width: 100%;
+        height: auto;
+    }
 
-.tiptap-figure.align-center img {
-    display: block;
-    margin: 0 auto;
-}
+    .prose .tiptap-figure.align-left img,
+    .tiptap-figure.align-left img {
+        display: block;
+        margin-right: auto;
+        margin-left: 0;
+    }
 
-.tiptap-figure.align-right img {
-    display: block;
-    margin-left: auto;
-    margin-right: 0;
+    .prose .tiptap-figure.align-center img,
+    .tiptap-figure.align-center img {
+        display: block;
+        margin: 0 auto;
+    }
+
+    .prose .tiptap-figure.align-right img,
+    .tiptap-figure.align-right img {
+        display: block;
+        margin-left: auto;
+        margin-right: 0;
+    }
 }

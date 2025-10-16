@@ -2,7 +2,7 @@ import { mergeAttributes } from "@tiptap/core";
 import Image from "@tiptap/extension-image";
 
 export type ImageAlignment = "left" | "center" | "right";
-export type ImageSize = "sm" | "md" | "lg";
+export type ImageSize = "sm" | "md" | "lg" | "full";
 
 interface ImageLink {
     href: string;
