@@ -1,10 +1,10 @@
 "use client";
 
-import PostForm, { PostFormData } from "@/components/admin/post/PostForm";
+import PostForm, { PostFormData } from "@/components/admin/posts/PostForm";
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import api from "@/lib/api";
-import { fetchMediaDetail } from "@/lib/media-api";
+import { fetchMediaDetail } from "@/lib/api/admin/media";
 import { buildMediaUrl } from "@/lib/media-url";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
