@@ -1,4 +1,4 @@
-import type { CategorySummary } from "@/lib/post-api";
+import type { CategorySummary } from "@/lib/types/common";
 
 // 階層付きカテゴリ型
 export type CategoryWithLevel = CategorySummary & { level: number };
