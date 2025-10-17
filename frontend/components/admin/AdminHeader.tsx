@@ -23,8 +23,8 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { Menu } from "lucide-react";
-import { UserProfileResponse, UserRole } from "@/lib/user-api";
-import { fetchMediaDetail, MediaResponse } from "@/lib/media-api";
+import { UserProfileResponse, UserRole } from "@/lib/api/admin/users";
+import { fetchMediaDetail, MediaResponse } from "@/lib/api/admin/media";
 import { buildMediaUrl } from "@/lib/media-url";
 import { getUserRoleLabel } from "@/lib/user-utils";
 import api from "@/lib/api";
