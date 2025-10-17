@@ -8,7 +8,7 @@ import {
     deleteMedia as deleteMediaRequest,
     fetchMediaDetail,
     fetchMediaDownloadUrl,
-} from "@/lib/media-api";
+} from "@/lib/api/admin/media";
 import { buildMediaUrl } from "@/lib/media-url";
 import { copyTextToClipboard } from "@/lib/media-utils";
 

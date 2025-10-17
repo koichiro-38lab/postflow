@@ -1,4 +1,5 @@
 import api, { isApiError } from "@/lib/api";
+import type { MediaResponse } from "@/lib/types/common";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
@@ -9,27 +10,8 @@ const DEFAULT_UPLOAD_ERROR_MESSAGE = "メディアのアップロードに失敗
 
 export { API_BASE_URL };
 
-export type UserRole = "ADMIN" | "EDITOR" | "AUTHOR";
-
-export interface MediaCreatedBy {
-    id: number;
-    displayName: string;
-    role: UserRole;
-}
-
-export interface MediaResponse {
-    id: number;
-    filename: string;
-    storageKey: string;
-    mime: string;
-    bytes: number;
-    width: number | null;
-    height: number | null;
-    altText: string | null;
-    publicUrl: string | null;
-    createdAt: string;
-    createdBy: MediaCreatedBy;
-}
+// Re-export MediaResponse for convenience
+export type { MediaResponse } from "@/lib/types/common";
 
 export interface MediaPresignRequest {
     filename: string;
@@ -123,6 +105,9 @@ const extractErrorMessage = (data: unknown): string | undefined => {
     return undefined;
 };
 
+/**
+ * メディアアップロード用の presigned URL を取得
+ */
 export async function requestMediaUpload(
     payload: MediaPresignRequest
 ): Promise<MediaPresignResult> {
@@ -145,6 +130,9 @@ export async function requestMediaUpload(
     }
 }
 
+/**
+ * メディアをデータベースに登録
+ */
 export async function registerMedia(
     payload: MediaCreateRequest
 ): Promise<MediaResponse> {
@@ -167,6 +155,9 @@ export async function registerMedia(
     }
 }
 
+/**
+ * メディアファイルを S3 にアップロード
+ */
 export async function uploadMediaObject(
     file: Blob,
     presign: MediaPresignResult,
@@ -248,6 +239,9 @@ export async function uploadMediaObject(
     });
 }
 
+/**
+ * メディア一覧を取得
+ */
 export async function fetchMediaList(
     params: MediaListParams = {}
 ): Promise<MediaListResponse> {
@@ -260,6 +254,9 @@ export async function fetchMediaList(
     return response.data;
 }
 
+/**
+ * メディアダウンロード用の presigned URL を取得
+ */
 export async function fetchMediaDownloadUrl(
     id: number
 ): Promise<MediaDownloadInfo> {
@@ -269,6 +266,9 @@ export async function fetchMediaDownloadUrl(
     return response.data;
 }
 
+/**
+ * メディア詳細を取得
+ */
 export async function fetchMediaDetail(id: number): Promise<MediaResponse> {
     const response = await api.get<MediaResponse>(
         `${API_BASE_URL}/api/admin/media/${id}`
@@ -276,6 +276,9 @@ export async function fetchMediaDetail(id: number): Promise<MediaResponse> {
     return response.data;
 }
 
+/**
+ * メディアを削除
+ */
 export async function deleteMedia(id: number): Promise<void> {
     await api.delete(`${API_BASE_URL}/api/admin/media/${id}`);
 }

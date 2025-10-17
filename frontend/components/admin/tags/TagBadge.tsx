@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import { TagSummary } from "@/lib/post-api";
+import type { TagSummary } from "@/lib/types/common";
 
 interface TagBadgeProps {
     tag: TagSummary;

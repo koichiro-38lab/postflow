@@ -6,12 +6,12 @@ import { toast } from "sonner";
 import {
     UserForm,
     type UpdateUserFormData,
-} from "@/components/admin/user/UserForm";
+} from "@/components/admin/users/UserForm";
 import {
     fetchUserById,
     updateUserByAdmin,
     type UserResponse,
-} from "@/lib/user-api";
+} from "@/lib/api/admin/users";
 
 export default function EditUserPage() {
     const router = useRouter();

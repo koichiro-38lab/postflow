@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React from "react";
 import { Hash, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,41 +17,26 @@ import {
     TableBody,
     Table,
 } from "@/components/ui/table";
-import { Tag, fetchTags, deleteTag } from "@/lib/post-api";
+import { useTagList } from "@/features/admin/tags/hooks/use-tag-list";
+import { deleteTag } from "@/lib/api/admin/tags";
 import { TagForm } from "./TagForm";
+import { TagTableSkeleton } from "./TagTableSkeleton";
 import { toast } from "sonner";
-import { Skeleton } from "@/components/ui/skeleton";
 
 export function TagList() {
-    // タグ一覧状態
-    const [tags, setTags] = useState<Tag[]>([]);
-    // 編集中のタグ
-    const [editingTag, setEditingTag] = useState<Tag | null>(null);
-    // ダイアログ開閉状態
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
-    // ローディング状態
-    const [loading, setLoading] = useState(true);
-    // スケルトン表示時の行数保持
-    const [lastCount, setLastCount] = useState<number>(5);
-
-    // タグ一覧取得
-    const loadTags = useCallback(async () => {
-        setLoading(true);
-        try {
-            const data = await fetchTags();
-            setTags(data);
-            // 次回のスケルトン表示用にデータ件数を記憶
-            setLastCount(Math.max(1, data.length));
-        } catch {
-            toast.error("タグの取得に失敗しました");
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        loadTags();
-    }, [loadTags]);
+    // hook から必要な状態とハンドラを取得
+    const {
+        tags,
+        editingTag,
+        loading,
+        isDialogOpen,
+        lastCount,
+        handleEdit,
+        handleCreate,
+        handleFormSuccess,
+        handleCloseDialog,
+        loadTags,
+    } = useTagList();
 
     // タグ削除ハンドラ
     const handleDelete = async (id: number) => {
@@ -59,47 +44,11 @@ export function TagList() {
             await deleteTag(id);
             toast.success("タグを削除しました");
             loadTags();
-            setIsDialogOpen(false);
+            handleCloseDialog();
         } catch {
             toast.error("タグの削除に失敗しました");
         }
     };
-
-    // タグ編集クリックハンドラ
-    const handleEdit = (tag: Tag) => {
-        setEditingTag(tag);
-        setIsDialogOpen(true);
-    };
-
-    // 新規作成クリックハンドラ
-    const handleCreate = () => {
-        setEditingTag(null);
-        setIsDialogOpen(true);
-    };
-
-    // フォーム送信成功時のハンドラ
-    const handleFormSuccess = () => {
-        setIsDialogOpen(false);
-        loadTags();
-    };
-
-    // スケルトン行コンポーネント
-    const SkeletonRow = () => (
-        <TableRow className="h-12">
-            <TableCell>
-                <Skeleton className="h-4 w-2/3" />
-            </TableCell>
-            <TableCell>
-                <Skeleton className="h-4 w-2/3" />
-            </TableCell>
-            <TableCell>
-                <Skeleton className="h-4 w-2/3" />
-            </TableCell>
-            <TableCell>
-                <Skeleton className="h-4 w-2/3" />
-            </TableCell>
-        </TableRow>
-    );
 
     return (
         <div>
@@ -111,7 +60,7 @@ export function TagList() {
                 </Button>
             </div>
             <div className="mb-4">
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <Dialog open={isDialogOpen} onOpenChange={handleCloseDialog}>
                     <DialogContent>
                         <DialogHeader>
                             <DialogTitle>
@@ -132,34 +81,7 @@ export function TagList() {
             </div>
 
             {loading ? (
-                <div className="rounded-md border">
-                    <Table className="min-w-[700px] table-auto">
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="whitespace-nowrap min-w-[200px]">
-                                    タグ名
-                                </TableHead>
-                                <TableHead className="whitespace-nowrap min-w-[140px]">
-                                    スラッグ
-                                </TableHead>
-                                <TableHead className="whitespace-nowrap min-w-[80px]">
-                                    投稿数
-                                </TableHead>
-                                <TableHead className="whitespace-nowrap min-w-[160px]">
-                                    作成日
-                                </TableHead>
-                                <TableHead className="whitespace-nowrap min-w-[80px]"></TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {Array.from({ length: Math.max(1, lastCount) }).map(
-                                (_, index) => (
-                                    <SkeletonRow key={index} />
-                                )
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
+                <TagTableSkeleton rowCount={lastCount} />
             ) : (
                 <div className="rounded-md border">
                     <Table className="min-w-[700px] table-auto">
@@ -184,7 +106,7 @@ export function TagList() {
                             {tags.length === 0 ? (
                                 <TableRow>
                                     <TableCell
-                                        colSpan={4}
+                                        colSpan={5}
                                         className="h-24 text-center"
                                     >
                                         タグがありません

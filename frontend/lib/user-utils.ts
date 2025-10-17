@@ -1,4 +1,4 @@
-import { UserStatus, UserRole } from "./user-api";
+import type { UserStatus, UserRole } from "@/lib/types/common";
 
 // ユーザーステータスの日本語ラベル
 export const USER_STATUS_LABELS: Record<UserStatus, string> = {

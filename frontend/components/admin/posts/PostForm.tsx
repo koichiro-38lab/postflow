@@ -7,12 +7,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { isApiError } from "@/lib/api";
 import api from "@/lib/api";
-import {
-    fetchCategories,
-    CategorySummary,
-    fetchTags,
-    TagSummary,
-} from "@/lib/post-api";
+import { fetchCategories } from "@/lib/api/admin/categories";
+import { fetchTags } from "@/lib/api/admin/tags";
+import type { CategorySummary, TagSummary } from "@/lib/types/common";
 import { buildCategoryTree, CategoryWithLevel } from "@/lib/category-utils";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -52,7 +49,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { TipTapEditor } from "@/components/admin/tiptap/TipTapEditor";
 import { MediaPickerDialog } from "@/components/admin/media/MediaPickerDialog";
-import { TagSelector } from "@/components/admin/tag/TagSelector";
+import { TagSelector } from "@/components/admin/tags/TagSelector";
 import type { SucceededMediaItem } from "@/features/admin/media/types";
 import Image from "next/image";
 import { buildMediaUrl } from "@/lib/media-url";

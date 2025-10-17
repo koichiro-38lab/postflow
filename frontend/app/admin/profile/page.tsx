@@ -4,13 +4,13 @@ import { useState, useEffect, useCallback } from "react";
 import { AxiosError } from "axios";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { UserForm, type UserFormData } from "@/components/admin/user/UserForm";
+import { UserForm, type UserFormData } from "@/components/admin/users/UserForm";
 import {
     fetchMyProfile,
     updateMyProfile,
     UserProfileResponse,
     UserProfileUpdateRequest,
-} from "@/lib/user-api";
+} from "@/lib/api/admin/users";
 
 export default function ProfilePage() {
     const router = useRouter();

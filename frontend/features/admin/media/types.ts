@@ -1,4 +1,4 @@
-import type { MediaResponse } from "@/lib/media-api";
+import type { MediaResponse } from "@/lib/api/admin/media";
 
 export type UploadPhase = "presigning" | "uploading" | "registering";
 

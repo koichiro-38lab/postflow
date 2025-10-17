@@ -19,8 +19,8 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover";
-import type { TagSummary } from "@/lib/post-api";
-import { createTag } from "@/lib/post-api";
+import type { TagSummary } from "@/lib/types/common";
+import { createTag } from "@/lib/api/admin/tags";
 import { toast } from "sonner";
 
 interface TagComboboxProps {

@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { isApiError } from "@/lib/api";
 import { VIEW_MODE_STORAGE_KEY } from "@/lib/media-url";
-import { fetchMediaList } from "@/lib/media-api";
+import { fetchMediaList } from "@/lib/api/admin/media";
 
 import type {
     FailedMediaItem,

@@ -14,7 +14,12 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Tag, TagCreateRequest, createTag, updateTag } from "@/lib/post-api";
+import {
+    Tag,
+    TagCreateRequest,
+    createTag,
+    updateTag,
+} from "@/lib/api/admin/tags";
 import { toast } from "sonner";
 
 interface TagFormProps {

@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/select";
 import { MediaPickerDialog } from "@/components/admin/media/MediaPickerDialog";
 import type { SucceededMediaItem } from "@/features/admin/media/types";
-import { fetchMediaDetail, MediaResponse } from "@/lib/media-api";
+import { fetchMediaDetail, MediaResponse } from "@/lib/api/admin/media";
 import { buildMediaUrl } from "@/lib/media-url";
 import { ImageIcon, X, Save, Loader2 } from "lucide-react";
 import type {
@@ -34,7 +34,7 @@ import type {
     UserProfileResponse,
     UserRole,
     UserStatus,
-} from "@/lib/user-api";
+} from "@/lib/api/admin/users";
 import {
     getUserStatusLabel,
     getUserRoleLabel,

@@ -27,7 +27,7 @@ import {
     createCategory,
     updateCategory,
     fetchCategories,
-} from "@/lib/post-api";
+} from "@/lib/api/admin/categories";
 import { toast } from "sonner";
 
 interface CategoryFormProps {

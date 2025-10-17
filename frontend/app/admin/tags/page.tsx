@@ -1,4 +1,4 @@
-import { TagList } from "@/components/admin/tag/TagList";
+import { TagList } from "@/components/admin/tags/TagList";
 
 export default function TagsPage() {
     return (

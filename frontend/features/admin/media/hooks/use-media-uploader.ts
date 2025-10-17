@@ -9,7 +9,7 @@ import {
     requestMediaUpload,
     uploadMediaObject,
     type MediaPresignRequest,
-} from "@/lib/media-api";
+} from "@/lib/api/admin/media";
 import {
     generateUploadId,
     getOptionalImageDimensions,
