@@ -2,8 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { UserForm, type UserFormData } from "@/components/admin/user/UserForm";
-import { createUserByAdmin } from "@/lib/user-api";
+import { UserForm, type UserFormData } from "@/components/admin/users/UserForm";
+import { createUserByAdmin } from "@/lib/api/admin/users";
 import { isApiError } from "@/lib/api";
 
 export default function CreateUserPage() {
