@@ -46,6 +46,7 @@ export default function PostContent({ post }: PostContentProps) {
                                 post.author?.username ||
                                 "Unknown"
                             }
+                            className="object-cover"
                         />
                         <AvatarFallback className="text-xs">
                             {(
@@ -129,6 +130,7 @@ export default function PostContent({ post }: PostContentProps) {
                                         post.author.displayName ||
                                         post.author.username
                                     }のアバター`}
+                                    className="object-cover"
                                 />
                             </Avatar>
 
