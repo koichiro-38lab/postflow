@@ -1,9 +1,7 @@
+@import "@/lib/tiptap/styles.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-/* TipTap 共通スタイル */
-@import "@/lib/tiptap/styles.css";
 
 @layer base {
     :root {
