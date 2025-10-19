@@ -94,7 +94,7 @@ export default function Background() {
                     minHeight: isMobile ? 100.0 : 300.0,
                     minWidth: isMobile ? 100.0 : 300.0,
                     maxDistance: isMobile ? 15.0 : 30.0,
-                    color: "#212A46",
+                    color: "#2C3550",
                     backgroundColor: "#0a0e27",
                 };
 
