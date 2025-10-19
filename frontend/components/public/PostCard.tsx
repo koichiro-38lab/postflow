@@ -50,9 +50,9 @@ export function PostCard({ post }: PostCardProps) {
                         </div>
 
                         {/* タイトル */}
-                        <h2 className="text-sm line-clamp-2 group-hover:text-primary transition-colors">
+                        <h3 className="text-sm line-clamp-2 group-hover:text-primary transition-colors">
                             {post.title}
-                        </h2>
+                        </h3>
 
                         {/* 公開日時 */}
                         <div className="flex items-center justify-end text-xs text-muted-foreground mr-2">
