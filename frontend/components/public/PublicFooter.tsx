@@ -19,9 +19,9 @@ export async function PublicFooter() {
                 <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
                     {/* サイト情報 */}
                     <div>
-                        <h3 className="text-lg font-semibold mb-4">
+                        <h2 className="text-lg font-semibold mb-4">
                             {process.env.NEXT_PUBLIC_SITE_NAME}
-                        </h3>
+                        </h2>
                         <p className="text-sm text-muted-foreground">
                             Spring Boot と Next.js で構築する
                             <br />
@@ -31,9 +31,9 @@ export async function PublicFooter() {
 
                     {/* リンク */}
                     <div>
-                        <h3 className="text-lg font-semibold mb-4">
+                        <h2 className="text-lg font-semibold mb-4">
                             コンテンツ
-                        </h3>
+                        </h2>
                         <div className="flex gap-10">
                             <ul className="space-y-2 text-sm">
                                 <li>

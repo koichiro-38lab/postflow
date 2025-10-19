@@ -56,6 +56,8 @@ export default function ProfilePage() {
             const updated = await updateMyProfile(updateData);
             setProfile(updated);
             toast.success("プロフィールが更新されました");
+            // ヘッダーのアバターを更新するためのイベントを発火
+            window.dispatchEvent(new Event("profileUpdated"));
         } catch (error) {
             console.error("Failed to update profile:", error);
             throw new Error("プロフィールの更新に失敗しました");

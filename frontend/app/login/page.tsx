@@ -22,8 +22,8 @@ import {
     FormMessage,
 } from "@/components/ui/form";
 import { useAuthStore } from "@/lib/auth-store";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
+import Header from "@/components/login/LoginHeader";
+import Footer from "@/components/login/LoginFooter";
 
 const loginSchema = z.object({
     email: z.string().email("メールアドレスの形式が正しくありません"),
@@ -47,9 +47,6 @@ export default function LoginPage() {
     const { formState } = form;
 
     const onSubmit = async (data: LoginForm) => {
-        console.log("onSubmit called with data:", data);
-        console.log("Current isLoading:", isLoading);
-        console.log("Current formState.isSubmitting:", formState.isSubmitting);
         try {
             await login(data.email, data.password);
             console.log("Login successful, redirecting to admin");

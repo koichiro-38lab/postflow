@@ -11,8 +11,7 @@ import Background from "@/components/ui/background";
 
 export const metadata: Metadata = {
     title: process.env.NEXT_PUBLIC_SITE_NAME || "",
-    description:
-        "最新の技術記事、プログラミングチュートリアル、開発者向け情報を発信するブログプラットフォームです。",
+    description: "Spring Boot × Next.js で構築する実用型CMS",
 };
 
 export default async function HomePage() {
@@ -30,7 +29,7 @@ export default async function HomePage() {
             <div className="min-h-screen">
                 {/* ヒーローセクション */}
                 <section
-                    className="relative h-[50vh] overflow-hidden"
+                    className="relative h-[40vh] overflow-hidden border-b"
                     style={{ isolation: "isolate" }}
                 >
                     <Background />
@@ -38,34 +37,26 @@ export default async function HomePage() {
                         className="relative flex items-center justify-center h-full"
                         style={{ zIndex: 10 }}
                     >
-                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
-                            <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-white">
-                                <span className="block mb-2">
-                                    Spring Boot × Next.js
-                                </span>
-                                <span className="block">
-                                    で構築する実践型CMS
-                                </span>
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
+                            <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-white">
+                                PostFlow
                             </h1>
-                            <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto leading-relaxed">
-                                エンジニアのための情報発信プラットフォーム。
+                            <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto leading-7 md:leading-9">
+                                Spring Boot と Next.js で実現する
                                 <br className="hidden sm:block" />
-                                最新の技術トレンド、開発ノウハウ、実践的なチュートリアルをお届けします。
+                                次世代CMSプラットフォーム
                             </p>
                         </div>
                     </div>
                 </section>
 
                 {/* 最新記事セクション */}
-                <section className="py-10 md:py-10 bg-background">
+                <section className="py-8 md:py-8 bg-background">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="text-center mb-12">
-                            <h2 className="text-2xl md:text-3xl font-bold mb-3">
+                        <div className="text-center mb-8">
+                            <h2 className="text-2xl md:text-3xl font-bold">
                                 最新記事
                             </h2>
-                            <p className="text-muted-foreground">
-                                最新の技術記事をチェックしましょう
-                            </p>
                         </div>
 
                         {posts.length > 0 ? (
@@ -82,7 +73,7 @@ export default async function HomePage() {
                                 </p>
                             </div>
                         )}
-                        <div className="flex justify-end mt-3">
+                        <div className="flex justify-center mt-8">
                             <Button variant="ghost" asChild>
                                 <Link
                                     href="/posts"
@@ -98,15 +89,12 @@ export default async function HomePage() {
 
                 {/* カテゴリセクション */}
                 {topLevelCategories.length > 0 && (
-                    <section className="py-16 md:py-16 bg-muted/50 border-t border-b">
+                    <section className="py-8 md:py-8 bg-muted/30 border-t border-b">
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                            <div className="text-center mb-12">
-                                <h2 className="text-2xl md:text-3xl font-bold mb-3">
+                            <div className="text-center mb-8">
+                                <h2 className="text-2xl md:text-3xl font-bold">
                                     カテゴリから探す
                                 </h2>
-                                <p className="text-muted-foreground">
-                                    興味のあるトピックを見つけましょう
-                                </p>
                             </div>
                             <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
                                 {topLevelCategories.map((category) => (
