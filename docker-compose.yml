@@ -44,6 +44,9 @@ services:
             - JWT_SECRET=${JWT_SECRET}
             - JWT_ACCESS_TTL=${JWT_ACCESS_TTL}
             - JWT_REFRESH_TTL=${JWT_REFRESH_TTL}
+            - APP_DEMO_RESET_ENABLED=${APP_DEMO_RESET_ENABLED}
+            - APP_DEMO_RESET_INITIAL_DELAY=${APP_DEMO_RESET_INITIAL_DELAY}
+            - APP_DEMO_RESET_FIXED_DELAY=${APP_DEMO_RESET_FIXED_DELAY}
         depends_on:
             - db
             - minio
