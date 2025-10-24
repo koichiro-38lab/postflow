@@ -1,6 +1,5 @@
 import type { Editor } from "@tiptap/react";
 import type { SucceededMediaItem } from "@/features/admin/media/types";
-import { buildMediaUrl } from "@/lib/media-url";
 
 // メディア選択時の処理
 export function handleMediaSelect(
@@ -10,8 +9,8 @@ export function handleMediaSelect(
     setIsReplaceMode: (value: boolean) => void,
     setMediaPickerOpen: (value: boolean) => void
 ) {
-    // メディアURLを構築
-    const mediaUrl = buildMediaUrl(item.storageKey);
+    // storageKeyを相対パスとしてそのまま保存 (renderHTML時にbuildMediaUrlで変換される)
+    const storageKey = item.storageKey;
 
     if (isReplaceMode) {
         // 置換モードの場合、既存の画像を更新
@@ -20,7 +19,7 @@ export function handleMediaSelect(
                 .chain()
                 .focus()
                 .updateAttributes("mediaImage", {
-                    src: mediaUrl,
+                    src: storageKey,
                     alt: item.altText || "",
                 })
                 .run();
@@ -28,15 +27,15 @@ export function handleMediaSelect(
         setIsReplaceMode(false);
     } else {
         // 新規挿入の場合
-        if (editor && mediaUrl) {
-            // MediaImage拡張のinsertContentを使用
+        if (editor && storageKey) {
+            // MediaImage拡張のinsertContentを使用 (相対パスで保存)
             editor
                 .chain()
                 .focus()
                 .insertContent({
                     type: "mediaImage",
                     attrs: {
-                        src: mediaUrl,
+                        src: storageKey,
                         alt: item.altText || "",
                         align: "center",
                         size: "lg",
