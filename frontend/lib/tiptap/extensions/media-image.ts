@@ -1,5 +1,6 @@
 import { mergeAttributes } from "@tiptap/core";
 import Image from "@tiptap/extension-image";
+import { buildMediaUrl } from "@/lib/media-url";
 
 export type ImageAlignment = "left" | "center" | "right";
 export type ImageSize = "sm" | "md" | "lg" | "full";
@@ -98,6 +99,7 @@ export const MediaImage = Image.extend({
             size = "lg",
             link,
             caption,
+            src,
             ...rest
         } = HTMLAttributes;
         const figureAttributes = mergeAttributes(
@@ -109,7 +111,9 @@ export const MediaImage = Image.extend({
             HTMLAttributes.class ? { class: HTMLAttributes.class } : {}
         );
 
-        const imageAttributes = mergeAttributes(rest);
+        // src を環境変数を使って完全な URL に変換
+        const fullSrc = typeof src === "string" ? buildMediaUrl(src) : src;
+        const imageAttributes = mergeAttributes({ ...rest, src: fullSrc });
         const children = [["img", imageAttributes]];
 
         // キャプションがある場合、figcaptionを追加
