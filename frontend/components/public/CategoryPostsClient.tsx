@@ -1,9 +1,13 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { getPublicCategories, getPublicPosts } from "@/lib/api/public";
-import type { CategoryPublic, PostPublic, PageableResponse } from "@/features/public/types";
+import type {
+    CategoryPublic,
+    PostPublic,
+    PageableResponse,
+} from "@/features/public/types";
 import { PostCard } from "@/components/public/PostCard";
 import { Pagination } from "@/components/public/Pagination";
 
@@ -13,13 +17,17 @@ interface Props {
 
 export default function CategoryPostsClient({ slug }: Props) {
     const searchParams = useSearchParams();
-    const router = useRouter();
     const pageParam = searchParams.get("page");
-    const [page, setPage] = useState<number>(pageParam ? parseInt(pageParam, 10) : 0);
+    const [page, setPage] = useState<number>(
+        pageParam ? parseInt(pageParam, 10) : 0
+    );
 
     const [category, setCategory] = useState<CategoryPublic | null>(null);
-    const [childCategories, setChildCategories] = useState<CategoryPublic[]>([]);
-    const [response, setResponse] = useState<PageableResponse<PostPublic> | null>(null);
+    const [childCategories, setChildCategories] = useState<CategoryPublic[]>(
+        []
+    );
+    const [response, setResponse] =
+        useState<PageableResponse<PostPublic> | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -42,18 +50,31 @@ export default function CategoryPostsClient({ slug }: Props) {
                 if (!mounted) return;
                 setCategory(cat);
 
-                const childCats = cat.parentId === null ? categories.filter((c) => c.parentId === cat.id) : [];
+                const childCats =
+                    cat.parentId === null
+                        ? categories.filter((c) => c.parentId === cat.id)
+                        : [];
                 setChildCategories(childCats);
 
                 // 親カテゴリの場合は categories クエリでまとめて取得
                 if (cat.parentId === null) {
                     const slugs = [cat.slug, ...childCats.map((c) => c.slug)];
-                    const combined = await getPublicPosts({ page: 0, size: 1000, categories: slugs.join(",") });
+                    const combined = await getPublicPosts({
+                        page: 0,
+                        size: 1000,
+                        categories: slugs.join(","),
+                    });
                     if (!mounted) return;
                     // 重複排除・ソート・ページネーション（同じロジックを維持）
                     const allPosts = combined.content;
-                    const uniquePosts = Array.from(new Map(allPosts.map((p) => [p.id, p])).values());
-                    uniquePosts.sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+                    const uniquePosts = Array.from(
+                        new Map(allPosts.map((p) => [p.id, p])).values()
+                    );
+                    uniquePosts.sort(
+                        (a, b) =>
+                            new Date(b.publishedAt).getTime() -
+                            new Date(a.publishedAt).getTime()
+                    );
                     const pageSize = 12;
                     const startIndex = page * pageSize;
                     const endIndex = startIndex + pageSize;
@@ -65,7 +86,11 @@ export default function CategoryPostsClient({ slug }: Props) {
                         pageable: {
                             pageNumber: page,
                             pageSize,
-                            sort: { sorted: true, unsorted: false, empty: false },
+                            sort: {
+                                sorted: true,
+                                unsorted: false,
+                                empty: false,
+                            },
                             offset: startIndex,
                             paged: true,
                             unpaged: false,
@@ -80,13 +105,17 @@ export default function CategoryPostsClient({ slug }: Props) {
                     };
                     setResponse(resp);
                 } else {
-                    const res = await getPublicPosts({ page, size: 12, category: slug });
+                    const res = await getPublicPosts({
+                        page,
+                        size: 12,
+                        category: slug,
+                    });
                     if (!mounted) return;
                     setResponse(res);
                 }
-            } catch (e: any) {
+            } catch (e) {
                 if (!mounted) return;
-                setError(e?.message ?? String(e));
+                setError(e instanceof Error ? e.message : String(e));
             } finally {
                 if (!mounted) return;
                 setLoading(false);
@@ -99,14 +128,20 @@ export default function CategoryPostsClient({ slug }: Props) {
     }, [slug, page]);
 
     if (loading) return <div className="py-12 text-center">読み込み中...</div>;
-    if (error) return <div className="py-12 text-center text-red-500">{error}</div>;
+    if (error)
+        return <div className="py-12 text-center text-red-500">{error}</div>;
     if (!response || !category) return null;
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="mb-8">
-                <h1 className="text-3xl font-bold mt-8 mb-2">{category.name}</h1>
-                <p className="text-muted-foreground">{category.description || `${category.name}カテゴリの記事一覧`}</p>
+                <h1 className="text-3xl font-bold mt-8 mb-2">
+                    {category.name}
+                </h1>
+                <p className="text-muted-foreground">
+                    {category.description ||
+                        `${category.name}カテゴリの記事一覧`}
+                </p>
             </div>
 
             {childCategories.length > 0 && (
@@ -127,7 +162,9 @@ export default function CategoryPostsClient({ slug }: Props) {
             )}
 
             {response.content.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">このカテゴリの記事はまだありません</div>
+                <div className="text-center py-12 text-muted-foreground">
+                    このカテゴリの記事はまだありません
+                </div>
             ) : (
                 <>
                     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
@@ -136,7 +173,11 @@ export default function CategoryPostsClient({ slug }: Props) {
                         ))}
                     </div>
 
-                    <Pagination currentPage={page} totalPages={response.totalPages} basePath={`/categories/${slug}`} />
+                    <Pagination
+                        currentPage={page}
+                        totalPages={response.totalPages}
+                        basePath={`/categories/${slug}`}
+                    />
                 </>
             )}
         </div>
