@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Post } from "@/lib/api/admin/posts";
 import { buildMediaUrl } from "@/lib/media-url";
-import { SortField, SortDirection } from "../../types";
+import { SortField, SortDirection } from "@/features/admin/posts/types";
 import {
     Table,
     TableBody,
