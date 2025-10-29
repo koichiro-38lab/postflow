@@ -60,6 +60,9 @@ jobs:
                   SPRING_DATASOURCE_USERNAME: postgres
                   SPRING_DATASOURCE_PASSWORD: postgres
 
+            - name: Install xmllint
+              run: sudo apt-get update && sudo apt-get install -y libxml2-utils
+
             - name: Check test coverage thresholds
               working-directory: ./backend
               run: |
