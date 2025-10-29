@@ -30,7 +30,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         // カテゴリのサイトマップエントリ
         const categoryEntries: MetadataRoute.Sitemap = categories.map(
             (category) => ({
-                url: `${baseUrl}/posts?category=${category.slug}`,
+                url: `${baseUrl}/categories/${category.slug}`,
                 lastModified: new Date(),
                 changeFrequency: "daily",
                 priority: 0.6,
@@ -39,7 +39,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
         // タグのサイトマップエントリ
         const tagEntries: MetadataRoute.Sitemap = tags.map((tag) => ({
-            url: `${baseUrl}/posts?tag=${tag.slug}`,
+            url: `${baseUrl}/tags/${tag.slug}`,
             lastModified: new Date(),
             changeFrequency: "daily",
             priority: 0.5,
