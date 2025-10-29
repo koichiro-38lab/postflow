@@ -60,35 +60,50 @@ jobs:
                   SPRING_DATASOURCE_USERNAME: postgres
                   SPRING_DATASOURCE_PASSWORD: postgres
 
-            - name: Install xmllint
-              run: sudo apt-get update && sudo apt-get install -y libxml2-utils
-
             - name: Check test coverage thresholds
               working-directory: ./backend
               run: |
-                  # JaCoCo XML レポートから Instructions と Branches カバレッジを抽出
-                  INSTRUCTIONS=$(xmllint --xpath "string(//counter[@type='INSTRUCTION']/@covered div (//counter[@type='INSTRUCTION']/@covered + //counter[@type='INSTRUCTION']/@missed) * 100)" target/site/jacoco/jacoco.xml)
-                  BRANCHES=$(xmllint --xpath "string(//counter[@type='BRANCH']/@covered div (//counter[@type='BRANCH']/@covered + //counter[@type='BRANCH']/@missed) * 100)" target/site/jacoco/jacoco.xml)
+                  # Pythonでカバレッジを抽出・チェック
+                  python3 << 'EOF'
+                  import xml.etree.ElementTree as ET
+                  import sys
 
-                  echo "カバレッジレポート"
-                  echo "Instructions: ${INSTRUCTIONS%.*}%"
-                  echo "Branches: ${BRANCHES%.*}%"
+                  # JaCoCo XMLレポートをパース
+                  tree = ET.parse('target/site/jacoco/jacoco.xml')
+                  root = tree.getroot()
+
+                  # Instructions と Branches のカバレッジを計算
+                  def get_coverage(counter_type):
+                      counter = root.find(f".//counter[@type='{counter_type}']")
+                      if counter is None:
+                          return 0.0
+                      covered = int(counter.get('covered', 0))
+                      missed = int(counter.get('missed', 0))
+                      total = covered + missed
+                      return (covered / total * 100) if total > 0 else 0.0
+
+                  instructions = get_coverage('INSTRUCTION')
+                  branches = get_coverage('BRANCH')
+
+                  print("カバレッジレポート")
+                  print(f"Instructions: {instructions:.1f}%")
+                  print(f"Branches: {branches:.1f}%")
 
                   # 85% / 70% 基準チェック
-                  INSTRUCTIONS_INT=${INSTRUCTIONS%.*}
-                  BRANCHES_INT=${BRANCHES%.*}
+                  failed = False
+                  if instructions < 85:
+                      print(f"Instructions カバレッジが基準 (85%) を下回っています: {instructions:.1f}%")
+                      failed = True
 
-                  if [ "$INSTRUCTIONS_INT" -lt 85 ]; then
-                    echo "Instructions カバレッジが基準 (85%) を下回っています: ${INSTRUCTIONS_INT}%"
-                    exit 1
-                  fi
+                  if branches < 70:
+                      print(f"Branches カバレッジが基準 (70%) を下回っています: {branches:.1f}%")
+                      failed = True
 
-                  if [ "$BRANCHES_INT" -lt 70 ]; then
-                    echo "Branches カバレッジが基準 (70%) を下回っています: ${BRANCHES_INT}%"
-                    exit 1
-                  fi
+                  if failed:
+                      sys.exit(1)
 
-                  echo "すべてのカバレッジ基準をクリアしました!"
+                  print("すべてのカバレッジ基準をクリアしました!")
+                  EOF
 
             - name: Upload coverage report
               uses: actions/upload-artifact@v4
@@ -106,7 +121,6 @@ jobs:
                       const fs = require('fs');
                       const xml = fs.readFileSync('backend/target/site/jacoco/jacoco.xml', 'utf8');
 
-                      // 簡易パース (実際は xml2js などを使うのが望ましい)
                       const instructionsCovered = xml.match(/type="INSTRUCTION"[^>]*covered="(\d+)"/)[1];
                       const instructionsMissed = xml.match(/type="INSTRUCTION"[^>]*missed="(\d+)"/)[1];
                       const branchesCovered = xml.match(/type="BRANCH"[^>]*covered="(\d+)"/)[1];
