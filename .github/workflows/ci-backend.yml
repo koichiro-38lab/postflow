@@ -1,0 +1,161 @@
+# filepath: .github/workflows/ci-backend.yml
+name: Backend CI
+
+on:
+    push:
+        branches: [main]
+        paths:
+            - "backend/**"
+            - ".github/workflows/ci-backend.yml"
+    pull_request:
+        branches: [main]
+        paths:
+            - "backend/**"
+            - ".github/workflows/ci-backend.yml"
+
+jobs:
+    test:
+        name: Test & Coverage
+        runs-on: ubuntu-latest
+
+        services:
+            postgres:
+                image: postgres:15-alpine
+                env:
+                    POSTGRES_DB: postflow_test
+                    POSTGRES_USER: postgres
+                    POSTGRES_PASSWORD: postgres
+                ports:
+                    - 5432:5432
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set up JDK 21
+              uses: actions/setup-java@v4
+              with:
+                  java-version: "21"
+                  distribution: "temurin"
+                  cache: "maven"
+
+            - name: Cache Maven packages
+              uses: actions/cache@v4
+              with:
+                  path: ~/.m2/repository
+                  key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+                  restore-keys: |
+                      ${{ runner.os }}-maven-
+
+            - name: Run tests with JaCoCo coverage
+              working-directory: ./backend
+              run: ./mvnw clean test jacoco:report
+              env:
+                  SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/postflow_test
+                  SPRING_DATASOURCE_USERNAME: postgres
+                  SPRING_DATASOURCE_PASSWORD: postgres
+
+            - name: Check test coverage thresholds
+              working-directory: ./backend
+              run: |
+                  # JaCoCo XML レポートから Instructions と Branches カバレッジを抽出
+                  INSTRUCTIONS=$(xmllint --xpath "string(//counter[@type='INSTRUCTION']/@covered div (//counter[@type='INSTRUCTION']/@covered + //counter[@type='INSTRUCTION']/@missed) * 100)" target/site/jacoco/jacoco.xml)
+                  BRANCHES=$(xmllint --xpath "string(//counter[@type='BRANCH']/@covered div (//counter[@type='BRANCH']/@covered + //counter[@type='BRANCH']/@missed) * 100)" target/site/jacoco/jacoco.xml)
+
+                  echo "カバレッジレポート"
+                  echo "Instructions: ${INSTRUCTIONS%.*}%"
+                  echo "Branches: ${BRANCHES%.*}%"
+
+                  # 85% / 70% 基準チェック
+                  INSTRUCTIONS_INT=${INSTRUCTIONS%.*}
+                  BRANCHES_INT=${BRANCHES%.*}
+
+                  if [ "$INSTRUCTIONS_INT" -lt 85 ]; then
+                    echo "Instructions カバレッジが基準 (85%) を下回っています: ${INSTRUCTIONS_INT}%"
+                    exit 1
+                  fi
+
+                  if [ "$BRANCHES_INT" -lt 70 ]; then
+                    echo "Branches カバレッジが基準 (70%) を下回っています: ${BRANCHES_INT}%"
+                    exit 1
+                  fi
+
+                  echo "すべてのカバレッジ基準をクリアしました!"
+
+            - name: Upload coverage report
+              uses: actions/upload-artifact@v4
+              if: always()
+              with:
+                  name: jacoco-report
+                  path: backend/target/site/jacoco/
+                  retention-days: 7
+
+            - name: Comment PR with coverage
+              if: github.event_name == 'pull_request'
+              uses: actions/github-script@v7
+              with:
+                  script: |
+                      const fs = require('fs');
+                      const xml = fs.readFileSync('backend/target/site/jacoco/jacoco.xml', 'utf8');
+
+                      // 簡易パース (実際は xml2js などを使うのが望ましい)
+                      const instructionsCovered = xml.match(/type="INSTRUCTION"[^>]*covered="(\d+)"/)[1];
+                      const instructionsMissed = xml.match(/type="INSTRUCTION"[^>]*missed="(\d+)"/)[1];
+                      const branchesCovered = xml.match(/type="BRANCH"[^>]*covered="(\d+)"/)[1];
+                      const branchesMissed = xml.match(/type="BRANCH"[^>]*missed="(\d+)"/)[1];
+
+                      const instructionsPercent = (instructionsCovered / (parseInt(instructionsCovered) + parseInt(instructionsMissed)) * 100).toFixed(1);
+                      const branchesPercent = (branchesCovered / (parseInt(branchesCovered) + parseInt(branchesMissed)) * 100).toFixed(1);
+
+                      const comment = `## Backend Test Coverage Report
+
+                      | Metric | Coverage | Status |
+                      |--------|----------|--------|
+                      | **Instructions** | ${instructionsPercent}% | ${instructionsPercent >= 85 ? '◯' : 'X'} |
+                      | **Branches** | ${branchesPercent}% | ${branchesPercent >= 70 ? '◯' : 'X'} |
+
+                      **Thresholds**: Instructions ≥ 85%, Branches ≥ 70%
+
+                      <details>
+                      <summary>詳細レポート</summary>
+                      Artifact として JaCoCo レポートがアップロードされています。
+                      </details>`;
+
+                      github.rest.issues.createComment({
+                        issue_number: context.issue.number,
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        body: comment
+                      });
+
+    build:
+        name: Build JAR
+        runs-on: ubuntu-latest
+        needs: test
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Set up JDK 21
+              uses: actions/setup-java@v4
+              with:
+                  java-version: "21"
+                  distribution: "temurin"
+                  cache: "maven"
+
+            - name: Build JAR (skip tests)
+              working-directory: ./backend
+              run: ./mvnw clean package -DskipTests
+
+            - name: Upload JAR artifact
+              uses: actions/upload-artifact@v4
+              with:
+                  name: backend-jar
+                  path: backend/target/*.jar
+                  retention-days: 7
