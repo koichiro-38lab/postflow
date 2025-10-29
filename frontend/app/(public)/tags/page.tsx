@@ -7,6 +7,9 @@ export const metadata: Metadata = {
     description: "記事をタグ別に探す",
 };
 
+// 動的レンダリング: ランタイムでAPIからデータ取得
+export const revalidate = 60; // 1分ごとに再検証（キャッシュ）
+
 export default async function TagsPage() {
     // タグ一覧を取得
     const tags = await getPublicTags();

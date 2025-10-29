@@ -14,6 +14,10 @@ export const metadata: Metadata = {
     description: "Spring Boot × Next.js で構築する実用型CMS",
 };
 
+// 動的レンダリング: ランタイムでAPIからデータ取得
+export const dynamic = "force-dynamic";
+export const revalidate = 10; // 10秒ごとに再検証（キャッシュ）
+
 export default async function HomePage() {
     // 最新記事を取得（トップページ用に6件）
     const postsResponse = await getPublicPosts({ size: 8 });
