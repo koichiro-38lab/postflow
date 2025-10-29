@@ -7,7 +7,8 @@ export const metadata: Metadata = {
     description: "記事をカテゴリ別に探す",
 };
 
-// 動的レンダリング: ランタイムでAPIからデータ取得
+// 動的レンダリング: ビルド時のプリレンダリングを無効化
+export const dynamic = "force-dynamic";
 export const revalidate = 60; // 1分ごとに再検証（キャッシュ）
 
 export default async function CategoriesPage() {
