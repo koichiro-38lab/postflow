@@ -1,0 +1,84 @@
+# Docker Compose設定: VPSデモ環境用
+# 起動方法: docker compose -f docker-compose.yml -f docker-compose.demo.yml up -d
+
+services:
+    nginx:
+        image: nginx:alpine
+        container_name: pf_nginx
+        ports:
+            - "80:80"
+            - "443:443"
+        volumes:
+            - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+            - ./nginx/conf.d:/etc/nginx/conf.d:ro
+            - /etc/letsencrypt:/etc/letsencrypt:ro # VPS上で設定済みのSSL証明書をマウント
+        depends_on:
+            frontend:
+                condition: service_started
+            backend:
+                condition: service_started
+            minio:
+                condition: service_started
+            minio-init:
+                condition: service_completed_successfully
+        healthcheck:
+            test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health" ]
+            interval: 10s
+            timeout: 5s
+            retries: 3
+        restart: unless-stopped
+
+    frontend:
+        command: sh -c "npm install && npm run build && npm start"
+        ports: [] # 外部ポート非公開（Nginx経由のみ）
+        expose:
+            - "3000"
+        environment:
+            - NODE_ENV=production
+            - NEXT_PUBLIC_SITE_NAME=${NEXT_PUBLIC_SITE_NAME}
+            - NEXT_PUBLIC_API_URL=https://demo.postflow.work/api
+            - NEXT_PUBLIC_MEDIA_BASE_URL=https://demo.postflow.work/media
+            - NEXT_PUBLIC_MEDIA_BUCKET=${S3_BUCKET}
+
+    backend:
+        ports: [] # 外部ポート非公開（Nginx経由のみ）
+        expose:
+            - "8080"
+        environment:
+            - BASE_URL=https://demo.postflow.work
+            - SPRING_PROFILES_ACTIVE=demo
+            - S3_PUBLIC_BASE_URL=https://demo.postflow.work/media/${S3_BUCKET}/
+
+    db:
+        ports: [] # 外部ポート非公開（内部通信のみ）
+        expose:
+            - "5432"
+
+    db-test:
+        profiles: [ "disabled" ] # デモ環境では無効化
+
+    flyway-test:
+        profiles: [ "disabled" ] # デモ環境では無効化
+
+    minio:
+        ports: [] # 外部ポート非公開（Nginx経由のみ）
+        expose:
+            - "9000"
+            - "9001"
+        environment:
+            - MINIO_ROOT_USER=${MINIO_ROOT_USER}
+            - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+            - MINIO_CORS_ALLOW_ORIGIN=https://demo.postflow.work
+            - MINIO_CORS_ALLOW_METHODS=GET,PUT,POST,DELETE,HEAD
+            - MINIO_CORS_ALLOW_HEADERS=*
+
+    minio-init:
+        entrypoint: >
+            sh -c '
+              until mc alias set local http://minio:9000 "${MINIO_ROOT_USER}" "${MINIO_ROOT_PASSWORD}"; do
+                echo "Waiting for MinIO to be ready...";
+                sleep 5;
+              done &&
+              mc mb --ignore-existing local/${S3_BUCKET} &&
+              mc anonymous set download local/${S3_BUCKET}
+            '
