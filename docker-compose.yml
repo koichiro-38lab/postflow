@@ -7,7 +7,7 @@ services:
             - ./frontend:/app
         command: sh -c "npm install && npm run dev"
         ports:
-            - "3100:3000"
+            - "${PORT_FRONTEND}:3000"
         depends_on:
             - backend
         environment:
@@ -27,7 +27,7 @@ services:
             - ~/.m2:/root/.m2 # Mavenキャッシュを共有
         command: mvn spring-boot:run -Dspring-boot.run.jvmArguments="-Dspring.devtools.restart.enabled=true -Dspring.devtools.livereload.enabled=true"
         ports:
-            - "8100:8080"
+            - "${PORT_BACKEND}:8080"
         environment:
             - BASE_URL=${BASE_URL}
             - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
@@ -62,7 +62,7 @@ services:
         volumes:
             - db_data:/var/lib/postgresql/data
         ports:
-            - "5532:5432"
+            - "${PORT_DB}:5432"
         healthcheck:
             test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
             interval: 5s
@@ -80,7 +80,7 @@ services:
         volumes:
             - db_test_data:/var/lib/postgresql/data
         ports:
-            - "5533:5432"
+            - "${PORT_DB_TEST}:5432"
         healthcheck:
             test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d appdb_test" ]
             interval: 5s
@@ -107,14 +107,14 @@ services:
         environment:
             - MINIO_ROOT_USER=${MINIO_ROOT_USER}
             - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
-            - MINIO_CORS_ALLOW_ORIGIN=http://localhost:3100
+            - MINIO_CORS_ALLOW_ORIGIN=${BASE_URL}
             - MINIO_CORS_ALLOW_METHODS=GET,PUT,POST,DELETE,HEAD
             - MINIO_CORS_ALLOW_HEADERS=*
         volumes:
             - minio_data:/data
         ports:
-            - "9000:9000" # S3 API
-            - "9001:9001" # Web Console
+            - "${PORT_MINIO_API}:9000" # S3 API
+            - "${PORT_MINIO_CONSOLE}:9001" # Web Console
         restart: unless-stopped
 
     minio-init:
@@ -125,7 +125,11 @@ services:
                 condition: service_started
         entrypoint: >
             sh -c '
-              mc alias set local http://minio:9000 "${MINIO_ROOT_USER}" "${MINIO_ROOT_PASSWORD}" &&
+              until mc alias set local http://minio:9000 "${MINIO_ROOT_USER}" "${MINIO_ROOT_PASSWORD}"; do
+                echo "Waiting for MinIO to be ready...";
+                sleep 5;
+              done &&
+              mc mb --ignore-existing local/${S3_BUCKET} &&
               mc anonymous set download local/${S3_BUCKET}
             '
         environment:
