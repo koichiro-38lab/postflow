@@ -126,10 +126,14 @@ jobs:
                       const fs = require('fs');
                       const xml = fs.readFileSync('backend/target/site/jacoco/jacoco.xml', 'utf8');
 
-                      const instructionsCovered = parseInt(xml.match(/type="INSTRUCTION"[^>]*covered="(\d+)"/)[1]);
-                      const instructionsMissed = parseInt(xml.match(/type="INSTRUCTION"[^>]*missed="(\d+)"/)[1]);
-                      const branchesCovered = parseInt(xml.match(/type="BRANCH"[^>]*covered="(\d+)"/)[1]);
-                      const branchesMissed = parseInt(xml.match(/type="BRANCH"[^>]*missed="(\d+)"/)[1]);
+                      // ルートレベルの<counter>要素を取得（最後のマッチ = <report>直下）
+                      const instrMatches = Array.from(xml.matchAll(/type="INSTRUCTION"[^>]*missed="(\d+)"[^>]*covered="(\d+)"/g));
+                      const branchMatches = Array.from(xml.matchAll(/type="BRANCH"[^>]*missed="(\d+)"[^>]*covered="(\d+)"/g));
+
+                      const instructionsMissed = parseInt(instrMatches[instrMatches.length - 1][1]);
+                      const instructionsCovered = parseInt(instrMatches[instrMatches.length - 1][2]);
+                      const branchesMissed = parseInt(branchMatches[branchMatches.length - 1][1]);
+                      const branchesCovered = parseInt(branchMatches[branchMatches.length - 1][2]);
 
                       const instructionsPercent = ((instructionsCovered / (instructionsCovered + instructionsMissed)) * 100).toFixed(1);
                       const branchesPercent = ((branchesCovered / (branchesCovered + branchesMissed)) * 100).toFixed(1);
