@@ -126,13 +126,13 @@ jobs:
                       const fs = require('fs');
                       const xml = fs.readFileSync('backend/target/site/jacoco/jacoco.xml', 'utf8');
 
-                      const instructionsCovered = xml.match(/type="INSTRUCTION"[^>]*covered="(\d+)"/)[1];
-                      const instructionsMissed = xml.match(/type="INSTRUCTION"[^>]*missed="(\d+)"/)[1];
-                      const branchesCovered = xml.match(/type="BRANCH"[^>]*covered="(\d+)"/)[1];
-                      const branchesMissed = xml.match(/type="BRANCH"[^>]*missed="(\d+)"/)[1];
+                      const instructionsCovered = parseInt(xml.match(/type="INSTRUCTION"[^>]*covered="(\d+)"/)[1]);
+                      const instructionsMissed = parseInt(xml.match(/type="INSTRUCTION"[^>]*missed="(\d+)"/)[1]);
+                      const branchesCovered = parseInt(xml.match(/type="BRANCH"[^>]*covered="(\d+)"/)[1]);
+                      const branchesMissed = parseInt(xml.match(/type="BRANCH"[^>]*missed="(\d+)"/)[1]);
 
-                      const instructionsPercent = (instructionsCovered / (parseInt(instructionsCovered) + parseInt(instructionsMissed)) * 100).toFixed(1);
-                      const branchesPercent = (branchesCovered / (parseInt(branchesCovered) + parseInt(branchesMissed)) * 100).toFixed(1);
+                      const instructionsPercent = ((instructionsCovered / (instructionsCovered + instructionsMissed)) * 100).toFixed(1);
+                      const branchesPercent = ((branchesCovered / (branchesCovered + branchesMissed)) * 100).toFixed(1);
 
                       const comment = `## Backend Test Coverage Report
 
