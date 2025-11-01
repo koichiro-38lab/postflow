@@ -21,6 +21,11 @@ const nextConfig: NextConfig = {
                 port: "9000",
                 pathname: "/**",
             },
+            {
+                protocol: "https",
+                hostname: "demo.postflow.work",
+                pathname: "/media/**",
+            },
         ],
     },
 };
