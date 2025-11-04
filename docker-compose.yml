@@ -7,14 +7,17 @@ services:
             - ./frontend:/app
         command: sh -c "npm install && npm run dev"
         ports:
-            - "${PORT_FRONTEND}:3000"
+            - "${PORT_FRONTEND}:${PORT_FRONTEND}"
         depends_on:
             - backend
         environment:
             - NEXT_PUBLIC_SITE_NAME=${NEXT_PUBLIC_SITE_NAME}
             - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+            - NEXT_SERVER_API_URL=${NEXT_SERVER_API_URL}
             - NEXT_PUBLIC_MEDIA_BASE_URL=${NEXT_PUBLIC_MEDIA_BASE_URL}
             - NEXT_PUBLIC_MEDIA_BUCKET=${NEXT_PUBLIC_MEDIA_BUCKET}
+            - PORT=${PORT_FRONTEND}
+            - HOST=0.0.0.0
         restart: unless-stopped
 
     backend:
