@@ -3,6 +3,7 @@
 import axios from "axios";
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
+import { getApiBaseUrl } from "@/lib/api-base-url";
 
 type DecodedToken = {
     sub?: string | number;
@@ -40,7 +41,7 @@ const REFRESH_COOKIE = "refreshToken";
 const ACCESS_COOKIE_TTL_DAYS = 1;
 const REFRESH_COOKIE_TTL_DAYS = 7;
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
+const API_BASE_URL = getApiBaseUrl();
 const isBrowser = typeof window !== "undefined";
 
 const authClient = axios.create({

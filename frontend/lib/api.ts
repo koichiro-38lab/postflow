@@ -4,8 +4,9 @@ import {
     getAccessTokenFromCookie,
     getRefreshTokenFromCookie,
 } from "@/lib/auth-store";
+import { getApiBaseUrl } from "@/lib/api-base-url";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const API_BASE_URL = getApiBaseUrl();
 
 const isBrowser = typeof window !== "undefined";
 
