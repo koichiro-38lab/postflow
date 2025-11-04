@@ -52,7 +52,7 @@ import { MediaPickerDialog } from "@/components/admin/media/MediaPickerDialog";
 import { TagSelector } from "@/components/admin/tags/TagSelector";
 import type { SucceededMediaItem } from "@/features/admin/media/types";
 import Image from "next/image";
-import { buildMediaUrl } from "@/lib/media-url";
+import { buildMediaUrl, normalizeMediaPublicUrl } from "@/lib/media-url";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import {
@@ -375,7 +375,10 @@ export default function PostForm({
     // カバー画像選択時の処理
     const handleSelectCover = useCallback((item: SucceededMediaItem) => {
         setCoverMediaId(item.id);
-        const src = item.publicUrl ?? buildMediaUrl(item.storageKey) ?? null;
+        const src =
+            normalizeMediaPublicUrl(item.publicUrl) ??
+            buildMediaUrl(item.storageKey) ??
+            null;
         setCoverPreviewUrl(src ?? null);
         setCoverPickerOpen(false);
     }, []);

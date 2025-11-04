@@ -3,7 +3,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Post } from "@/lib/api/admin/posts";
-import { buildMediaUrl } from "@/lib/media-url";
+import { buildMediaUrl, normalizeMediaPublicUrl } from "@/lib/media-url";
 import { SortField, SortDirection } from "@/features/admin/posts/types";
 import {
     Table,
@@ -177,7 +177,9 @@ export function AdminPostsTable({
                         posts.map((post) => {
                             // アイキャッチ画像のURLを生成
                             const coverImageUrl = post.coverMedia
-                                ? post.coverMedia.publicUrl ||
+                                ? normalizeMediaPublicUrl(
+                                      post.coverMedia.publicUrl
+                                  ) ||
                                   buildMediaUrl(post.coverMedia.storageKey)
                                 : null;
 

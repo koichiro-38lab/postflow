@@ -16,7 +16,7 @@ import {
 import type { SucceededMediaItem } from "@/features/admin/media/types";
 import { useMediaLibrary } from "@/features/admin/media/hooks/use-media-library";
 import { useMediaUploader } from "@/features/admin/media/hooks/use-media-uploader";
-import { buildMediaUrl } from "@/lib/media-url";
+import { buildMediaUrl, normalizeMediaPublicUrl } from "@/lib/media-url";
 import { formatBytes, formatDateTime } from "@/lib/media-utils";
 import { cn } from "@/lib/utils";
 
@@ -68,7 +68,10 @@ export function MediaPickerDialog({
 
     const previewUrl = useMemo(() => {
         if (!selectedItem) return null;
-        return selectedItem.publicUrl ?? buildMediaUrl(selectedItem.storageKey);
+        return (
+            normalizeMediaPublicUrl(selectedItem.publicUrl) ??
+            buildMediaUrl(selectedItem.storageKey)
+        );
     }, [selectedItem]);
 
     useEffect(() => {

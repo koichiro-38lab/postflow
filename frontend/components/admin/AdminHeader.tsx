@@ -1,6 +1,6 @@
 import { AdminHeaderClient } from "./AdminHeaderClient";
 import { getServerSession, getServerMediaDetail } from "@/lib/auth-server";
-import { buildMediaUrl } from "@/lib/media-url";
+import { buildMediaUrl, normalizeMediaPublicUrl } from "@/lib/media-url";
 
 export default async function AdminHeader() {
     // サーバー側でセッション情報を取得
@@ -21,7 +21,8 @@ export default async function AdminHeader() {
         );
         if (avatarMedia) {
             avatarUrl =
-                avatarMedia.publicUrl ?? buildMediaUrl(avatarMedia.storageKey);
+                normalizeMediaPublicUrl(avatarMedia.publicUrl) ??
+                buildMediaUrl(avatarMedia.storageKey);
         }
     }
 

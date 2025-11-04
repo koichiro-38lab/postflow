@@ -27,7 +27,7 @@ import {
 import { MediaPickerDialog } from "@/components/admin/media/MediaPickerDialog";
 import type { SucceededMediaItem } from "@/features/admin/media/types";
 import { fetchMediaDetail, MediaResponse } from "@/lib/api/admin/media";
-import { buildMediaUrl } from "@/lib/media-url";
+import { buildMediaUrl, normalizeMediaPublicUrl } from "@/lib/media-url";
 import { ImageIcon, X, Save, Loader2 } from "lucide-react";
 import type {
     UserResponse,
@@ -220,7 +220,8 @@ export function UserForm({
     const getAvatarUrl = () => {
         if (avatarMedia) {
             return (
-                avatarMedia.publicUrl ?? buildMediaUrl(avatarMedia.storageKey)
+                normalizeMediaPublicUrl(avatarMedia.publicUrl) ??
+                buildMediaUrl(avatarMedia.storageKey)
             );
         }
         if (avatarStorageKey) {
