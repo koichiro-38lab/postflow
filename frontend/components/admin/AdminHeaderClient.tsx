@@ -26,7 +26,7 @@ import { Menu } from "lucide-react";
 import { UserProfileResponse, UserRole } from "@/lib/api/admin/users";
 import { getUserRoleLabel } from "@/lib/user-utils";
 import { fetchMediaDetail } from "@/lib/api/admin/media";
-import { buildMediaUrl } from "@/lib/media-url";
+import { buildMediaUrl, normalizeMediaPublicUrl } from "@/lib/media-url";
 import api from "@/lib/api";
 
 interface AdminHeaderClientProps {
@@ -82,7 +82,7 @@ export function AdminHeaderClient({
                             updatedProfile.avatarMediaId
                         );
                         const newAvatarUrl =
-                            mediaData.publicUrl ??
+                            normalizeMediaPublicUrl(mediaData.publicUrl) ??
                             buildMediaUrl(mediaData.storageKey);
                         setAvatarUrl(newAvatarUrl);
                     } catch (error) {

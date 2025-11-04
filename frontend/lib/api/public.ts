@@ -10,8 +10,9 @@ import {
     TagPublic,
     GetPublicPostsParams,
 } from "@/features/public/types";
+import { getApiBaseUrl } from "@/lib/api-base-url";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const API_BASE_URL = getApiBaseUrl();
 
 /**
  * 公開投稿一覧を取得

@@ -1,10 +1,11 @@
 import api from "@/lib/api";
+import { getApiBaseUrl } from "@/lib/api-base-url";
 import type { Tag, TagCreateRequest } from "@/lib/types/common";
 
 // Re-export types for convenience
 export type { Tag, TagSummary, TagCreateRequest } from "@/lib/types/common";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const API_BASE_URL = getApiBaseUrl();
 
 export interface FetchTagsParams {
     query?: string;

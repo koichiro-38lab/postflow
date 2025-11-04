@@ -1,4 +1,5 @@
 import api from "@/lib/api";
+import { getApiBaseUrl } from "@/lib/api-base-url";
 import type {
     Category,
     CategoryCreateRequest,
@@ -12,7 +13,7 @@ export type {
     CategoryReorderRequest,
 } from "@/lib/types/common";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const API_BASE_URL = getApiBaseUrl();
 
 /**
  * カテゴリ一覧を取得

@@ -9,7 +9,7 @@ import {
     fetchMediaDetail,
     fetchMediaDownloadUrl,
 } from "@/lib/api/admin/media";
-import { buildMediaUrl } from "@/lib/media-url";
+import { buildMediaUrl, normalizeMediaPublicUrl } from "@/lib/media-url";
 import { copyTextToClipboard } from "@/lib/media-utils";
 
 import type { MediaListItem, SucceededMediaItem } from "../types";
@@ -63,7 +63,10 @@ export function useMediaDetail({
     // API が返した公開 URL が無ければストレージキーから生成する
     const detailPublicUrl = useMemo(() => {
         if (!detailMedia) return null;
-        return detailMedia.publicUrl ?? buildMediaUrl(detailMedia.storageKey);
+        return (
+            normalizeMediaPublicUrl(detailMedia.publicUrl) ??
+            buildMediaUrl(detailMedia.storageKey)
+        );
     }, [detailMedia]);
 
     // 詳細プレビューで利用する縦横比をメディア情報から算出し、値が無ければ既定比にフォールバック

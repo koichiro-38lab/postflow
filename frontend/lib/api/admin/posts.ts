@@ -1,10 +1,11 @@
 import api from "@/lib/api";
+import { getApiBaseUrl } from "@/lib/api-base-url";
 import type { PostsResponse } from "@/lib/types/common";
 
 // 型を re-export（利便性のため）
 export type { Post, PostsResponse } from "@/lib/types/common";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const API_BASE_URL = getApiBaseUrl();
 
 export interface FetchPostsParams {
     page?: number;

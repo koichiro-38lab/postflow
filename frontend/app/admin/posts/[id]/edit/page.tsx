@@ -5,9 +5,13 @@ import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import api from "@/lib/api";
 import { fetchMediaDetail } from "@/lib/api/admin/media";
-import { buildMediaUrl } from "@/lib/media-url";
+import {
+    buildMediaUrl,
+    normalizeMediaPublicUrl,
+} from "@/lib/media-url";
+import { getApiBaseUrl } from "@/lib/api-base-url";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const API_BASE_URL = getApiBaseUrl();
 
 // 編集ページコンポーネント
 export default function EditPostPage() {
@@ -59,7 +63,7 @@ export default function EditPostPage() {
                             post.coverMedia.id
                         );
                         const url =
-                            detail.publicUrl ??
+                            normalizeMediaPublicUrl(detail.publicUrl) ??
                             buildMediaUrl(detail.storageKey);
                         setInitialCoverMediaId(detail.id);
                         setInitialCoverPreviewUrl(url ?? null);

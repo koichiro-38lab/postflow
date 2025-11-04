@@ -1,5 +1,8 @@
 import { cookies } from "next/headers";
 import { UserProfileResponse } from "@/lib/api/admin/users";
+import { getApiBaseUrl } from "@/lib/api-base-url";
+
+const API_BASE_URL = getApiBaseUrl();
 
 /**
  * サーバーサイドで認証情報を取得
@@ -14,15 +17,12 @@ export async function getServerSession() {
 
     try {
         // バックエンドAPIからプロフィール情報を取得
-        const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/admin/users/me`,
-            {
-                headers: {
-                    Authorization: `Bearer ${accessToken}`,
-                },
-                cache: "no-store",
-            }
-        );
+        const response = await fetch(`${API_BASE_URL}/api/admin/users/me`, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
+            cache: "no-store",
+        });
 
         if (!response.ok) {
             return null;
@@ -49,7 +49,7 @@ export async function getServerMediaDetail(
 ) {
     try {
         const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/api/admin/media/${mediaId}`,
+            `${API_BASE_URL}/api/admin/media/${mediaId}`,
             {
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
