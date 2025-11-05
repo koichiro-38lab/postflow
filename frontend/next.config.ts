@@ -18,7 +18,13 @@ const nextConfig: NextConfig = {
             {
                 protocol: "http",
                 hostname: "localhost",
-                port: "3200",
+                port: "3000",
+                pathname: "/media/**",
+            },
+            {
+                protocol: "http",
+                hostname: "localhost",
+                port: "3100",
                 pathname: "/media/**",
             },
             {
@@ -43,6 +49,18 @@ const nextConfig: NextConfig = {
                 protocol: "http",
                 hostname: "localhost",
                 port: "9100",
+                pathname: "/**",
+            },
+            {
+                protocol: "http",
+                hostname: "100.118.151.11",
+                port: "3000",
+                pathname: "/**",
+            },
+            {
+                protocol: "http",
+                hostname: "100.118.151.11",
+                port: "3100",
                 pathname: "/**",
             },
             {
