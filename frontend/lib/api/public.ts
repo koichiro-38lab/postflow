@@ -11,8 +11,48 @@ import {
     GetPublicPostsParams,
 } from "@/features/public/types";
 import { getApiBaseUrl } from "@/lib/api-base-url";
+import { normalizeMediaPublicUrl, buildMediaUrl } from "@/lib/media-url";
 
 const API_BASE_URL = getApiBaseUrl();
+
+const normalizeCoverMedia = (
+    media: PostPublic["coverMedia"]
+): PostPublic["coverMedia"] => {
+    if (!media) return null;
+    const normalized =
+        normalizeMediaPublicUrl(media.url) ??
+        buildMediaUrl(media.url) ??
+        media.url;
+    return {
+        ...media,
+        url: normalized,
+    };
+};
+
+const normalizePublicPost = (post: PostPublic): PostPublic => ({
+    ...post,
+    coverMedia: normalizeCoverMedia(post.coverMedia),
+});
+
+const normalizePublicPostDetail = (
+    post: PostPublicDetail
+): PostPublicDetail => {
+    const normalizedPost = normalizePublicPost(post);
+    const avatarUrl = post.author.avatarUrl
+        ? normalizeMediaPublicUrl(post.author.avatarUrl) ??
+          buildMediaUrl(post.author.avatarUrl) ??
+          post.author.avatarUrl
+        : undefined;
+
+    return {
+        ...post,
+        ...normalizedPost,
+        author: {
+            ...post.author,
+            avatarUrl,
+        },
+    };
+};
 
 /**
  * 公開投稿一覧を取得
@@ -55,7 +95,12 @@ export async function getPublicPosts(
         throw new Error(`Failed to fetch posts: ${response.statusText}`);
     }
 
-    return response.json();
+    const data = (await response.json()) as PageableResponse<PostPublic>;
+
+    return {
+        ...data,
+        content: data.content.map(normalizePublicPost),
+    };
 }
 
 /**
@@ -82,7 +127,8 @@ export async function getPublicPostBySlug(
         throw new Error(`Failed to fetch post: ${response.statusText}`);
     }
 
-    return response.json();
+    const data = (await response.json()) as PostPublicDetail;
+    return normalizePublicPostDetail(data);
 }
 
 /**

@@ -1,18 +1,26 @@
-const DEFAULT_MEDIA_BASE_URL = "http://localhost:3200";
-const DEFAULT_MEDIA_BUCKET = "media";
+const MEDIA_BASE_URL_RAW = process.env.NEXT_PUBLIC_MEDIA_BASE_URL;
+const MEDIA_BUCKET_RAW = process.env.NEXT_PUBLIC_MEDIA_BUCKET;
 
-const MEDIA_BASE_URL_RAW = process.env.NEXT_PUBLIC_MEDIA_BASE_URL ?? "";
-const MEDIA_BUCKET_RAW = process.env.NEXT_PUBLIC_MEDIA_BUCKET ?? "";
+if (!MEDIA_BASE_URL_RAW || MEDIA_BASE_URL_RAW.trim().length === 0) {
+    throw new Error(
+        "環境変数 NEXT_PUBLIC_MEDIA_BASE_URL が設定されていません。"
+    );
+}
 
-export const MEDIA_BASE_URL =
-    MEDIA_BASE_URL_RAW.length > 0 ? MEDIA_BASE_URL_RAW : DEFAULT_MEDIA_BASE_URL;
-
-export const MEDIA_BUCKET =
-    MEDIA_BUCKET_RAW.length > 0 ? MEDIA_BUCKET_RAW : DEFAULT_MEDIA_BUCKET;
-
-export const VIEW_MODE_STORAGE_KEY = "admin-media-view-mode";
+if (!MEDIA_BUCKET_RAW || MEDIA_BUCKET_RAW.trim().length === 0) {
+    throw new Error(
+        "環境変数 NEXT_PUBLIC_MEDIA_BUCKET が設定されていません。"
+    );
+}
 
 const trimSlashes = (value: string) => value.replace(/^\/+/, "").replace(/\/+$/, "");
+const normalizeBase = (value: string) =>
+    value.endsWith("/") ? value.slice(0, -1) : value;
+
+export const MEDIA_BASE_URL = normalizeBase(MEDIA_BASE_URL_RAW.trim());
+export const MEDIA_BUCKET = trimSlashes(MEDIA_BUCKET_RAW.trim());
+
+export const VIEW_MODE_STORAGE_KEY = "admin-media-view-mode";
 
 const buildUrlFromPath = (pathname: string) => {
     const base = MEDIA_BASE_URL.endsWith("/")

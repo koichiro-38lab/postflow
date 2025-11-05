@@ -43,6 +43,9 @@ jobs:
               env:
                   # ビルド時の環境変数 (必要に応じて調整)
                   NEXT_PUBLIC_API_BASE_URL: http://localhost:8100
+                  NEXT_PUBLIC_API_URL: http://localhost:8100
+                  NEXT_PUBLIC_MEDIA_BASE_URL: http://localhost:3000
+                  NEXT_PUBLIC_MEDIA_BUCKET: media
                   NODE_ENV: production
 
             - name: Upload build artifacts
