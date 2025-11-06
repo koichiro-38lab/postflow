@@ -25,7 +25,7 @@ export async function PublicFooter() {
                         <p className="text-sm text-muted-foreground">
                             Spring Boot と Next.js で構築する
                             <br />
-                            モダンな CMS プラットフォーム
+                            CMS プラットフォーム
                         </p>
                     </div>
 

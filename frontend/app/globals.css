@@ -78,6 +78,11 @@
         outline-offset: 0px;
     }
 
+    .tiptap-editor .ProseMirror p,
+    .prose p {
+        @apply leading-loose;
+    }
+
     .tiptap-editor .ProseMirror p:last-child,
     .prose p:last-child {
         @apply mb-0;
@@ -108,6 +113,7 @@
     .prose blockquote {
         @apply mb-4 last:mb-0;
     }
+
 
     .tiptap-editor .ProseMirror ul,
     .prose ul {

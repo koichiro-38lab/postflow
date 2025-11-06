@@ -46,9 +46,9 @@ export default async function HomePage() {
                                 PostFlow
                             </h1>
                             <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto leading-7 md:leading-9">
-                                Spring Boot と Next.js で実現する
+                                Spring Boot と Next.js で構築する
                                 <br className="hidden sm:block" />
-                                次世代CMSプラットフォーム
+                                CMSプラットフォーム
                             </p>
                         </div>
                     </div>
