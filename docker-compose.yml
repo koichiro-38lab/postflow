@@ -1,7 +1,7 @@
 services:
     frontend:
         image: node:20
-        container_name: pf_frontend
+        container_name: pf-frontend
         working_dir: /app
         volumes:
             - ./frontend:/app
@@ -23,7 +23,7 @@ services:
 
     backend:
         image: maven:3.9-eclipse-temurin-21
-        container_name: pf_backend
+        container_name: pf-backend
         user: "${UID}:${GID}"
         working_dir: /app
         volumes:
@@ -60,7 +60,7 @@ services:
 
     db:
         image: postgres:15
-        container_name: pf_db
+        container_name: pf-db
         environment:
             - POSTGRES_DB=${POSTGRES_DB}
             - POSTGRES_USER=${POSTGRES_USER}
@@ -78,7 +78,7 @@ services:
 
     db-test:
         image: postgres:15
-        container_name: pf_db_test
+        container_name: pf-db-test
         environment:
             - POSTGRES_DB=appdb_test
             - POSTGRES_USER=${POSTGRES_USER}
@@ -96,7 +96,7 @@ services:
 
     flyway-test:
         image: flyway/flyway:10
-        container_name: pf_flyway_test
+        container_name: pf-flyway-test
         depends_on:
             db-test:
                 condition: service_healthy
@@ -108,7 +108,7 @@ services:
 
     minio:
         image: minio/minio:RELEASE.2025-09-07T16-13-09Z
-        container_name: pf_minio
+        container_name: pf-minio
         command: server /data --console-address ":9001"
         environment:
             - MINIO_ROOT_USER=${MINIO_ROOT_USER}
@@ -125,7 +125,7 @@ services:
 
     minio-init:
         image: minio/mc
-        container_name: pf_minio_init
+        container_name: pf-minio-init
         depends_on:
             minio:
                 condition: service_started
