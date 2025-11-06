@@ -91,9 +91,10 @@ jobs:
                       echo "Pulling latest changes"
                       git pull --ff-only
 
+
                       echo "Updating containers"
-                      docker compose pull
-                      docker compose -f docker-compose.yml -f docker-compose.demo.yml up -d --remove-orphans
+                      docker compose -f docker-compose.yml -f docker-compose.demo.yml pull
+                      docker compose -f docker-compose.yml -f docker-compose.demo.yml up -d --force-recreate --remove-orphans
 
                       if [ -n "${VPS_ENV:-}" ]; then
                           echo "Deployment environment flag detected."
