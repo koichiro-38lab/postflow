@@ -4,7 +4,7 @@
 services:
     nginx:
         image: nginx:alpine
-        container_name: pf_nginx
+        container_name: pf-nginx
         ports:
             - "80:80"
             - "443:443"
@@ -31,7 +31,7 @@ services:
 
     frontend:
         image: node:20
-        container_name: pf_frontend
+        container_name: pf-frontend
         working_dir: /app
         volumes:
             - ./frontend:/app
@@ -42,9 +42,10 @@ services:
         environment:
             - NODE_ENV=production
             - NEXT_PUBLIC_SITE_NAME=${NEXT_PUBLIC_SITE_NAME}
-            - NEXT_PUBLIC_API_URL=https://demo.postflow.work
-            - NEXT_PUBLIC_MEDIA_BASE_URL=https://demo.postflow.work
-            - NEXT_PUBLIC_MEDIA_BUCKET=${S3_BUCKET}
+            - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+            - NEXT_SERVER_API_URL=${NEXT_SERVER_API_URL}
+            - NEXT_PUBLIC_MEDIA_BASE_URL=${NEXT_PUBLIC_MEDIA_BASE_URL}
+            - NEXT_PUBLIC_MEDIA_BUCKET=${NEXT_PUBLIC_MEDIA_BUCKET}
 
     backend:
         ports: [] # 外部ポート非公開（Nginx経由のみ）
@@ -84,8 +85,7 @@ services:
         environment:
             - MINIO_ROOT_USER=${MINIO_ROOT_USER}
             - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
-            - MINIO_SERVER_URL=https://demo.postflow.work/media
-            - MINIO_CORS_ALLOW_ORIGIN=https://demo.postflow.work
+            - MINIO_CORS_ALLOW_ORIGIN=${BASE_URL}
             - MINIO_CORS_ALLOW_METHODS=GET,PUT,POST,DELETE,HEAD
             - MINIO_CORS_ALLOW_HEADERS=*
 
