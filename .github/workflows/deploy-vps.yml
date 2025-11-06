@@ -2,79 +2,84 @@
 name: Deploy to VPS
 
 on:
-    workflow_run:
-        workflows: ["Full CI Pipeline"]
-        types: [completed]
-    workflow_dispatch:
+  workflow_run:
+    workflows: ["Full CI Pipeline"]
+    types: [completed]
+  workflow_dispatch:
 
 jobs:
-    deploy:
-        if: >
-            github.event_name == 'workflow_dispatch' ||
-            (github.event_name == 'workflow_run' &&
-             github.event.workflow_run.conclusion == 'success' &&
-             github.event.workflow_run.event == 'push' &&
-             github.event.workflow_run.head_branch == 'main')
-        runs-on: ubuntu-latest
-        environment:
-            name: "production"
+  deploy:
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+    env:
+      VPS_PROJECT_DIR: ${{ vars.VPS_PROJECT_DIR }}
+      VPS_ENV: ${{ vars.VPS_ENV }}
 
-        steps:
-            - name: Ensure workflow_run trigger is valid
-              if: github.event_name == 'workflow_run'
-              run: |
-                  echo "Triggered by workflow_run for branch: ${{ github.event.workflow_run.head_branch }}"
+    steps:
+      - name: Ensure workflow_run trigger is valid
+        if: github.event_name == 'workflow_run'
+        run: |
+          echo "Triggered by workflow_run for branch: ${{ github.event.workflow_run.head_branch }}"
 
-            - name: Deploy via SSH
-              uses: appleboy/ssh-action@v1.0.3
-              with:
-                  host: ${{ secrets.VPS_HOST }}
-                  username: ${{ secrets.VPS_USER }}
-                  key: ${{ secrets.VPS_SSH_KEY }}
-                  port: ${{ secrets.VPS_SSH_PORT || '22' }}
-                  script_stop: true
-                  script: |
-                      set -Eeuo pipefail
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_SSH_PORT || '22' }}
+          script_stop: true
+          script: |
+            set -Eeuo pipefail
 
-                      echo "Changing directory to ${VPS_PROJECT_DIR}"
-                      cd "${VPS_PROJECT_DIR}"
+            : "${VPS_PROJECT_DIR:?VPS_PROJECT_DIR is required}"
 
-                      echo "Checking working tree status"
-                      if [ -n "$(git status --porcelain)" ]; then
-                        echo "Working tree has uncommitted changes. Aborting deploy."
-                        exit 1
-                      fi
+            echo "Changing directory to ${VPS_PROJECT_DIR}"
+            cd "${VPS_PROJECT_DIR}"
 
-                      echo "Fetching latest commits"
-                      git fetch --prune
+            echo "Checking working tree status"
+            if [ -n "$(git status --porcelain)" ]; then
+              echo "Working tree has uncommitted changes. Aborting deploy."
+              exit 1
+            fi
 
-                      echo "Switching to main branch"
-                      git checkout main
+            echo "Fetching latest commits"
+            git fetch --prune
 
-                      echo "Pulling latest changes"
-                      git pull --ff-only
+            echo "Switching to main branch"
+            git checkout main
 
-                      echo "Updating containers"
-                      docker compose pull
-                      docker compose up -d --remove-orphans
+            echo "Pulling latest changes"
+            git pull --ff-only
 
-                      if [ -n "${VPS_ENV:-}" ]; then
-                        echo "Deployment environment: ${VPS_ENV}"
-                      fi
+            echo "Updating containers"
+            docker compose pull
+            docker compose up -d --remove-orphans
 
-                      echo "$(date '+%Y-%m-%d %H:%M:%S') Deploy completed by GitHub Actions" >> deploy.log
+            if [ -n "${VPS_ENV:-}" ]; then
+              echo "Deployment environment: ${VPS_ENV}"
+            fi
 
-            - name: Deployment summary
-              run: |
-                  echo "## 🚀 Deployment Triggered" >> $GITHUB_STEP_SUMMARY
-                  if [ "${{ github.event_name }}" = "workflow_run" ]; then
-                      echo "- Trigger: Full CI Pipeline (run ${{ github.event.workflow_run.id }})" >> $GITHUB_STEP_SUMMARY
-                      echo "- Branch: ${{ github.event.workflow_run.head_branch }}" >> $GITHUB_STEP_SUMMARY
-                      echo "- Commit: ${{ github.event.workflow_run.head_sha }}" >> $GITHUB_STEP_SUMMARY
-                  else
-                      echo "- Trigger: Manual workflow_dispatch" >> $GITHUB_STEP_SUMMARY
-                      echo "- Actor: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
-                  fi
-                  echo "- Target host: ${{ secrets.VPS_HOST }}" >> $GITHUB_STEP_SUMMARY
-                  echo "" >> $GITHUB_STEP_SUMMARY
-                  echo "デプロイ完了。VPS 上で docker compose が更新されています。" >> $GITHUB_STEP_SUMMARY
+            echo "$(date '+%Y-%m-%d %H:%M:%S') Deploy completed by GitHub Actions" >> deploy.log
+
+      - name: Deployment summary
+        run: |
+          echo "## 🚀 Deployment Triggered" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            echo "- Trigger: Full CI Pipeline (run ${{ github.event.workflow_run.id }})" >> $GITHUB_STEP_SUMMARY
+            echo "- Branch: ${{ github.event.workflow_run.head_branch }}" >> $GITHUB_STEP_SUMMARY
+            echo "- Commit: ${{ github.event.workflow_run.head_sha }}" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- Trigger: Manual workflow_dispatch" >> $GITHUB_STEP_SUMMARY
+            echo "- Actor: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "- Target host: ${{ secrets.VPS_HOST }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "デプロイ完了。VPS 上で docker compose が更新されています。" >> $GITHUB_STEP_SUMMARY
