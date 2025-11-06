@@ -66,16 +66,17 @@ jobs:
                   key: ${{ secrets.VPS_SSH_KEY }}
                   port: ${{ env.VPS_SSH_PORT != '' && env.VPS_SSH_PORT || '22' }}
                   script_stop: true
-                  envs: VPS_PROJECT_DIR,VPS_ENV
-                  script: |
-                      set -Eeuo pipefail
+          envs: VPS_PROJECT_DIR,VPS_ENV
+          script: |
+            set -Eeuo pipefail
 
-                      : "${VPS_PROJECT_DIR:?VPS_PROJECT_DIR is required}"
+            : "${VPS_PROJECT_DIR:?VPS_PROJECT_DIR is required}"
+            LOG_FILE="${VPS_PROJECT_DIR}/.git/deploy.log"
 
-                      echo "Changing directory to ${VPS_PROJECT_DIR}"
-                      cd "${VPS_PROJECT_DIR}"
+            echo "Changing directory to ${VPS_PROJECT_DIR}"
+            cd "${VPS_PROJECT_DIR}"
 
-                      echo "Checking working tree status"
+            echo "Checking working tree status"
                       if [ -n "$(git status --porcelain)" ]; then
                         echo "Working tree has uncommitted changes. Aborting deploy."
                         exit 1
@@ -94,11 +95,11 @@ jobs:
                       docker compose pull
                       docker compose -f docker-compose.yml -f docker-compose.demo.yml up -d --remove-orphans
 
-                      if [ -n "${VPS_ENV:-}" ]; then
-                        echo "Deployment environment flag detected."
-                      fi
+            if [ -n "${VPS_ENV:-}" ]; then
+              echo "Deployment environment flag detected."
+            fi
 
-                      echo "$(date '+%Y-%m-%d %H:%M:%S') Deploy completed by GitHub Actions" >> deploy.log
+            echo "$(date '+%Y-%m-%d %H:%M:%S') Deploy completed by GitHub Actions" >> "${LOG_FILE}"
 
             - name: Deployment summary
               run: |
