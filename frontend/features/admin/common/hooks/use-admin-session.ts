@@ -49,7 +49,7 @@ export function useAdminSession() {
         return () => {
             cancelled = true;
         };
-    }, [accessToken, refresh]);
+    }, [accessToken, refresh, router]);
 
     return { user, isLoading, authReady };
 }
