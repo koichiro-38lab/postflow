@@ -7,6 +7,7 @@ import { AdminPostsTable } from "@/components/admin/posts/AdminPostsTable";
 import { AdminPostsFilters } from "@/components/admin/posts/AdminPostsFilters";
 import { AdminPagination } from "@/features/admin/common/components/AdminPagination";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Pencil } from "lucide-react";
 
 function AdminPostsPageContent() {
@@ -28,6 +29,8 @@ function AdminPostsPageContent() {
     const posts = postsResponse?.content || [];
     // 総ページ数
     const totalPages = postsResponse?.totalPages || 0;
+    // 投稿総件数
+    const totalCount = postsResponse?.totalElements || 0;
 
     return (
         <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
@@ -52,6 +55,17 @@ function AdminPostsPageContent() {
                 onCategoryChange={handleCategoryFilter}
                 onItemsPerPageChange={handleItemsPerPageChange}
             />
+            {/* 将来フィルタ側にも件数を渡す場合は props 拡張で対応 */}
+
+            {(loading || postsResponse) && (
+                <div className="text-sm text-muted-foreground mb-3">
+                    {loading ? (
+                        <Skeleton className="h-4 w-14" />
+                    ) : (
+                        `全 ${totalCount} 件`
+                    )}
+                </div>
+            )}
 
             {/* エラー表示 */}
             {error && <div className="text-red-500 mb-4">{error}</div>}
