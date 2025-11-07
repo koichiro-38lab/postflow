@@ -40,6 +40,8 @@ export function CategoryList() {
         handleCloseDialog,
         handleDelete,
     } = useCategoryTree();
+    // カテゴリ総件数
+    const totalCount = categories.length;
 
     // スケルトン行コンポーネント
     const SkeletonRow = () => (
@@ -141,6 +143,14 @@ export function CategoryList() {
                     <Folder className="h-4 w-4" />
                     新規作成
                 </Button>
+            </div>
+            {/* 将来別コンポーネントに件数を渡す場合は props 拡張で対応 */}
+            <div className="text-sm text-muted-foreground mb-3">
+                {loading ? (
+                    <Skeleton className="h-4 w-14" />
+                ) : (
+                    `全 ${totalCount} 件`
+                )}
             </div>
             <div className="mb-4">
                 <Dialog open={isDialogOpen} onOpenChange={handleCloseDialog}>
