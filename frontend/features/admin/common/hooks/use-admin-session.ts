@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/auth-store";
 
 /**
@@ -12,6 +13,8 @@ export function useAdminSession() {
     const { user, accessToken, refresh } = useAuthStore();
     const [authReady, setAuthReady] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    // Routerインスタンス
+    const router = useRouter();
 
     useEffect(() => {
         let cancelled = false;
@@ -32,6 +35,9 @@ export function useAdminSession() {
 
             if (token) {
                 setAuthReady(true);
+                if (!cancelled) {
+                    router.refresh();
+                }
             } else {
                 setAuthReady(false);
             }
@@ -43,7 +49,7 @@ export function useAdminSession() {
         return () => {
             cancelled = true;
         };
-    }, [accessToken, refresh]);
+    }, [accessToken, refresh, router]);
 
     return { user, isLoading, authReady };
 }
