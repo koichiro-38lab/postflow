@@ -29,6 +29,7 @@ interface UseMediaUploaderOptions {
     requestUpload?: typeof requestMediaUpload;
     uploadObject?: typeof uploadMediaObject;
     register?: typeof registerMedia;
+    adjustTotalCount?: (delta: number) => void;
 }
 
 interface UploadHandlers {
@@ -43,6 +44,7 @@ export function useMediaUploader({
     requestUpload = requestMediaUpload,
     uploadObject = uploadMediaObject,
     register = registerMedia,
+    adjustTotalCount,
 }: UseMediaUploaderOptions): UploadHandlers {
     // アップロードごとの進捗更新間隔を調整するためのタイムスタンプを保持
     const lastProgressRef = useRef<Record<string, number>>({});
@@ -150,6 +152,7 @@ export function useMediaUploader({
                             : item
                     )
                 );
+                adjustTotalCount?.(1);
                 delete lastProgressRef.current[id];
                 setListError(null);
                 setHasMore(true);
@@ -170,6 +173,7 @@ export function useMediaUploader({
             }
         },
         [
+            adjustTotalCount,
             register,
             requestUpload,
             setHasMore,

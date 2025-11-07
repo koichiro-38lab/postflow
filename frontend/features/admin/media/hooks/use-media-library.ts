@@ -40,6 +40,9 @@ export interface UseMediaLibraryResult {
     setHasMore: Dispatch<SetStateAction<boolean>>;
     loadMore: () => void;
     refresh: () => void;
+    totalCount: number | null;
+    setTotalCount: Dispatch<SetStateAction<number | null>>;
+    adjustTotalCount: (delta: number) => void;
 }
 
 export function useMediaLibrary(
@@ -60,6 +63,8 @@ export function useMediaLibrary(
     const [listError, setListError] = useState<string | null>(null);
     const [page, setPage] = useState(0);
     const [hasMore, setHasMore] = useState(true);
+    // メディア総件数
+    const [totalCount, setTotalCount] = useState<number | null>(null);
     const listContainerRef = useRef<HTMLDivElement>(null);
     const loadTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -161,6 +166,13 @@ export function useMediaLibrary(
                     totalPages === 0 ? false : currentNumber < totalPages - 1
                 );
                 setPage(pageToLoad + 1);
+                setTotalCount((current) =>
+                    typeof data.totalElements === "number"
+                        ? data.totalElements
+                        : typeof current === "number"
+                          ? current
+                          : 0
+                );
             } catch (error) {
                 if (!(isApiError(error) && error.response?.status === 401)) {
                     setListError(
@@ -206,6 +218,16 @@ export function useMediaLibrary(
         }
         scheduleLoad(page);
     }, [hasMore, initialLoading, loadingList, page, scheduleLoad]);
+
+    const adjustTotalCount = useCallback((delta: number) => {
+        setTotalCount((current) => {
+            const baseline =
+                typeof current === "number" && !Number.isNaN(current)
+                    ? current
+                    : 0;
+            return Math.max(0, baseline + delta);
+        });
+    }, []);
 
     useEffect(() => {
         refresh();
@@ -260,5 +282,8 @@ export function useMediaLibrary(
         setHasMore,
         loadMore,
         refresh,
+        totalCount,
+        setTotalCount,
+        adjustTotalCount,
     };
 }

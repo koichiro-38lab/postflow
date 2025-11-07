@@ -22,6 +22,7 @@ import { deleteTag } from "@/lib/api/admin/tags";
 import { TagForm } from "./TagForm";
 import { TagTableSkeleton } from "./TagTableSkeleton";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function TagList() {
     // hook から必要な状態とハンドラを取得
@@ -37,6 +38,8 @@ export function TagList() {
         handleCloseDialog,
         loadTags,
     } = useTagList();
+    // タグ総件数
+    const totalCount = tags.length;
 
     // タグ削除ハンドラ
     const handleDelete = async (id: number) => {
@@ -58,6 +61,14 @@ export function TagList() {
                     <Hash className="h-4 w-4" />
                     新規作成
                 </Button>
+            </div>
+            {/* 将来別コンポーネントに件数を渡す場合は props 拡張で対応 */}
+            <div className="text-sm text-muted-foreground mb-3">
+                {loading ? (
+                    <Skeleton className="h-4 w-14" />
+                ) : (
+                    `全 ${totalCount} 件`
+                )}
             </div>
             <div className="mb-4">
                 <Dialog open={isDialogOpen} onOpenChange={handleCloseDialog}>

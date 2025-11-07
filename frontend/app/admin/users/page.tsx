@@ -8,6 +8,7 @@ import { UserFilters } from "@/components/admin/users/UserFilters";
 import { AdminPagination } from "@/features/admin/common/components/AdminPagination";
 import { Button } from "@/components/ui/button";
 import { UserPlus } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function UsersPageContent() {
     // hook から必要な状態とハンドラを取得
@@ -25,6 +26,8 @@ function UsersPageContent() {
 
     // 総ページ数
     const totalPages = usersResponse?.totalPages || 0;
+    // ユーザー総件数
+    const totalCount = usersResponse?.totalElements || 0;
 
     return (
         <div className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
@@ -46,6 +49,14 @@ function UsersPageContent() {
                 onRoleChange={handleRoleFilter}
                 onItemsPerPageChange={handleItemsPerPageChange}
             />
+            {/* 将来フィルタ側にも件数を渡す場合は props 拡張で対応 */}
+            <div className="text-sm text-muted-foreground mb-3">
+                {loading ? (
+                    <Skeleton className="h-4 w-14" />
+                ) : (
+                    `全 ${totalCount} 件`
+                )}
+            </div>
 
             {/* テーブル */}
             <UserTable
