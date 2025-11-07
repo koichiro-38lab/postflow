@@ -19,6 +19,7 @@ interface UseMediaDetailOptions {
     fetchDetail?: typeof fetchMediaDetail;
     fetchDownloadUrl?: typeof fetchMediaDownloadUrl;
     deleteMedia?: typeof deleteMediaRequest;
+    adjustTotalCount?: (delta: number) => void;
 }
 
 interface UseMediaDetailResult {
@@ -46,6 +47,7 @@ export function useMediaDetail({
     fetchDetail = fetchMediaDetail,
     fetchDownloadUrl = fetchMediaDownloadUrl,
     deleteMedia = deleteMediaRequest,
+    adjustTotalCount,
 }: UseMediaDetailOptions): UseMediaDetailResult {
     const [detailMediaId, setDetailMediaId] = useState<number | null>(null);
     const [detailMedia, setDetailMedia] = useState<SucceededMediaItem | null>(
@@ -230,6 +232,7 @@ export function useMediaDetail({
                         )
                 )
             );
+            adjustTotalCount?.(-1);
             toast.success("メディアを削除しました", {
                 description: detailMedia.filename,
             });
@@ -245,7 +248,7 @@ export function useMediaDetail({
             setDeleteLoading(false);
             setDeleteConfirmOpen(false);
         }
-    }, [closeDetail, deleteMedia, detailMedia, setItems]);
+    }, [adjustTotalCount, closeDetail, deleteMedia, detailMedia, setItems]);
 
     // モーダルを閉じたときに削除確認ダイアログもリセット
     useEffect(() => {
