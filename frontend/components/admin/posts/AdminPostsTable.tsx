@@ -5,6 +5,8 @@ import Image from "next/image";
 import { Post } from "@/lib/api/admin/posts";
 import { buildMediaUrl, normalizeMediaPublicUrl } from "@/lib/media-url";
 import { SortField, SortDirection } from "@/features/admin/posts/types";
+import { derivePublicationState } from "@/features/admin/posts/utils/derive-publication-state";
+import { PublicationStateBadge } from "@/components/admin/posts/PublicationStateBadge";
 import {
     Table,
     TableBody,
@@ -19,8 +21,6 @@ import {
     ArrowUp,
     ArrowDown,
     FileText,
-    Eye,
-    Archive,
     Pencil,
 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -77,6 +77,10 @@ export function AdminPostsTable({
     onSort,
 }: AdminPostsTableProps) {
     const router = useRouter();
+
+    // 公開状態取得ヘルパー
+    const getPublicationState = (post: Post) =>
+        post.publicationState ?? derivePublicationState(post);
 
     // ソートアイコンを取得
     const getSortIcon = (field: SortField) => {
@@ -179,9 +183,24 @@ export function AdminPostsTable({
                             const coverImageUrl = post.coverMedia
                                 ? normalizeMediaPublicUrl(
                                       post.coverMedia.publicUrl
-                                  ) ||
-                                  buildMediaUrl(post.coverMedia.storageKey)
+                                  ) || buildMediaUrl(post.coverMedia.storageKey)
                                 : null;
+                            // 投稿の公開状態
+                            const publicationState = getPublicationState(post);
+                            // 公開日時の表示文字列
+                            const publishedDateLabel = post.publishedAt
+                                ? new Date(post.publishedAt).toLocaleString(
+                                      "ja-JP",
+                                      {
+                                          year: "numeric",
+                                          month: "2-digit",
+                                          day: "2-digit",
+                                          hour: "2-digit",
+                                          minute: "2-digit",
+                                          timeZone: "Asia/Tokyo",
+                                      }
+                                  )
+                                : "-";
 
                             return (
                                 <TableRow
@@ -219,26 +238,9 @@ export function AdminPostsTable({
                                         {post.category?.name || "未設定"}
                                     </TableCell>
                                     <TableCell className="w-28">
-                                        <div className="flex items-center gap-1">
-                                            {post.status === "DRAFT" && (
-                                                <span className="flex items-center border gap-1 px-2 py-1 rounded-lg text-xs">
-                                                    <FileText className="h-4 w-4 text-gray-500" />
-                                                    下書き
-                                                </span>
-                                            )}
-                                            {post.status === "PUBLISHED" && (
-                                                <span className="flex items-center border gap-1 px-2 py-1 rounded-lg text-xs">
-                                                    <Eye className="h-4 w-4 text-green-600" />
-                                                    公開済み
-                                                </span>
-                                            )}
-                                            {post.status === "ARCHIVED" && (
-                                                <span className="flex items-center border gap-1 px-2 py-1 rounded-lg text-xs">
-                                                    <Archive className="h-4 w-4 text-orange-600" />
-                                                    アーカイブ
-                                                </span>
-                                            )}
-                                        </div>
+                                        <PublicationStateBadge
+                                            state={publicationState}
+                                        />
                                     </TableCell>
                                     <TableCell className="w-28 whitespace-nowrap overflow-hidden text-ellipsis">
                                         {post.author?.displayName || "未設定"}
@@ -247,18 +249,7 @@ export function AdminPostsTable({
                                         {post.slug}
                                     </TableCell>
                                     <TableCell className="w-40 whitespace-nowrap">
-                                        {post.publishedAt
-                                            ? new Date(
-                                                  post.publishedAt
-                                              ).toLocaleString("ja-JP", {
-                                                  year: "numeric",
-                                                  month: "2-digit",
-                                                  day: "2-digit",
-                                                  hour: "2-digit",
-                                                  minute: "2-digit",
-                                                  timeZone: "Asia/Tokyo",
-                                              })
-                                            : "-"}
+                                        {publishedDateLabel}
                                     </TableCell>
                                     <TableCell className="w-20">
                                         <Button
