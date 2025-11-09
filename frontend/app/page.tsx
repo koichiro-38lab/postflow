@@ -108,7 +108,7 @@ export default async function HomePage() {
                                         className="group relative bg-background border border-border hover:border-primary rounded-md p-4"
                                     >
                                         <div className="flex justify-between items-center">
-                                            <h3 className="text-lg group-hover:text-primary transition-colors">
+                                            <h3 className="group-hover:text-primary transition-colors">
                                                 {category.name}
                                             </h3>
                                             <ArrowRight className="w-5 h-5 text-muted-foreground group-hover:text-primary " />
