@@ -128,6 +128,14 @@ export interface UserResponse {
 
 // ========== 投稿関連 ==========
 
+export type PostStatus = "DRAFT" | "PUBLISHED" | "ARCHIVED";
+
+export type PublicationState =
+    | "DRAFT"
+    | "PUBLISHED"
+    | "SCHEDULED"
+    | "ARCHIVED";
+
 export interface Post {
     id: string;
     title: string;
@@ -135,7 +143,8 @@ export interface Post {
     publishedAt: string | null;
     category: CategorySummary | null;
     tags?: TagSummary[];
-    status: string;
+    status: PostStatus;
+    publicationState?: PublicationState;
     coverMedia?: CoverMediaSummary | null;
     author?: AuthorSummary | null;
 }

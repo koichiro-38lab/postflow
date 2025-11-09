@@ -7,9 +7,10 @@ import {
 
 // 動的sitemap: ランタイムでAPIからデータ取得
 export const dynamic = "force-dynamic";
+export const revalidate = 0; // 60秒ごとに再生成
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+    const baseUrl = process.env.BASE_URL || "http://localhost:3000";
 
     try {
         // ランタイムでAPI呼び出し（ビルド時には実行されない）
@@ -70,12 +71,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
                 lastModified: new Date(),
                 changeFrequency: "weekly",
                 priority: 0.7,
-            },
-            {
-                url: `${baseUrl}/login`,
-                lastModified: new Date(),
-                changeFrequency: "monthly",
-                priority: 0.3,
             },
         ];
 

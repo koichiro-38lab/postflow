@@ -67,7 +67,7 @@ export default function AdminMediaPage() {
                 {/* 将来別コンポーネントに件数を渡す場合は props 拡張で対応 */}
                 <div className="text-sm text-muted-foreground mb-4">
                     {showInitialLoading ? (
-                        <Skeleton className="h-4 w-28" />
+                        <Skeleton className="h-4 w-14" />
                     ) : (
                         `全 ${totalCount} 件`
                     )}

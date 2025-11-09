@@ -6,6 +6,7 @@ import { useAdminSession } from "@/features/admin/common/hooks/use-admin-session
 import { useUpdateSearchParams } from "@/features/admin/common/hooks/use-update-search-params";
 import { isApiError } from "@/lib/api";
 import { PostsFilterParams, SortField, SortDirection } from "../types";
+import { derivePublicationState } from "@/features/admin/posts/utils/derive-publication-state";
 
 /**
  * 管理画面の投稿一覧ページで使用する状態管理hook
@@ -72,7 +73,14 @@ export function useAdminPosts() {
                     status: filters.statusFilter,
                     categoryId: filters.categoryFilter,
                 });
-                setPostsResponse(data);
+                // 予約公開情報を付与した投稿一覧
+                const enhancedContent = data.content.map((post) => ({
+                    ...post,
+                    publicationState: derivePublicationState(post),
+                }));
+                // 公開状態付きレスポンス
+                const enhancedData = { ...data, content: enhancedContent };
+                setPostsResponse(enhancedData);
                 // スケルトンを少し長めに表示するために遅延を追加
                 setTimeout(() => {
                     setLoading(false);

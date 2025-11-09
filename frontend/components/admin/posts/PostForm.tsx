@@ -9,7 +9,11 @@ import { isApiError } from "@/lib/api";
 import api from "@/lib/api";
 import { fetchCategories } from "@/lib/api/admin/categories";
 import { fetchTags } from "@/lib/api/admin/tags";
-import type { CategorySummary, TagSummary } from "@/lib/types/common";
+import type {
+    CategorySummary,
+    TagSummary,
+    PostStatus,
+} from "@/lib/types/common";
 import { buildCategoryTree, CategoryWithLevel } from "@/lib/category-utils";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -66,6 +70,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
+import { PublicationStateBadge } from "@/components/admin/posts/PublicationStateBadge";
+import { derivePublicationState } from "@/features/admin/posts/utils/derive-publication-state";
 
 const postSchema = z.object({
     title: z
@@ -251,6 +257,13 @@ export default function PostForm({
         },
     });
 
+    const statusValue = form.watch("status") as PostStatus;
+    const publishedAtValue = form.watch("publishedAt") || null;
+    const publicationState = derivePublicationState({
+        status: statusValue,
+        publishedAt: publishedAtValue,
+    });
+
     // selectedTagIds が変わったら form の tagIds を更新
     useEffect(() => {
         console.log("selectedTagIds変更:", selectedTagIds);
@@ -425,7 +438,12 @@ export default function PostForm({
                                     name="title"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>タイトル *</FormLabel>
+                                            <FormLabel className="flex items-center justify-between">
+                                                <span>タイトル *</span>
+                                                <PublicationStateBadge
+                                                    state={publicationState}
+                                                />
+                                            </FormLabel>
                                             <FormControl>
                                                 <Input
                                                     placeholder="記事のタイトルを入力"
