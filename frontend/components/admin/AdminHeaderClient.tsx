@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuthStore } from "@/lib/auth-store";
 import { Button } from "@/components/ui/button";
+import { PostFlowIcon } from "@/components/ui/postflow-icon";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -182,12 +183,7 @@ export function AdminHeaderClient({
                 </Sheet>
 
                 <Link href="/admin">
-                    <span className="text-2xl font-bold text-foreground cursor-pointer">
-                        {process.env.NEXT_PUBLIC_SITE_NAME}{" "}
-                        <span className="text-sm text-muted-foreground">
-                            Admin
-                        </span>
-                    </span>
+                    <PostFlowIcon />
                 </Link>
             </div>
 
