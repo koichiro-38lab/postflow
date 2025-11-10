@@ -6,6 +6,7 @@ import Link from "next/link";
 import { getPublicCategories } from "@/lib/api/public";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { ClientHeaderActions } from "./ClientHeaderActions";
+import { PostFlowIcon } from "@/components/ui/postflow-icon";
 
 export async function PublicHeader() {
     // サーバーサイドでカテゴリを取得
@@ -20,7 +21,9 @@ export async function PublicHeader() {
                     {/* サイトロゴ */}
                     <Link href="/" className="flex space-x-2">
                         <span className="text-2xl font-bold text-foreground cursor-pointer">
-                            {process.env.NEXT_PUBLIC_SITE_NAME}
+                            <div className="text-slate-800 dark:text-white">
+                                <PostFlowIcon />
+                            </div>
                         </span>
                     </Link>
 

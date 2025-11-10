@@ -3,6 +3,8 @@
  */
 
 import Link from "next/link";
+import { PostFlowLogo } from "@/components/ui/postflow-logo";
+import { GitHubIcon } from "@/components/ui/github-icon";
 import { getPublicCategories } from "@/lib/api/public";
 
 export async function PublicFooter() {
@@ -16,12 +18,12 @@ export async function PublicFooter() {
     return (
         <footer className="bg-background">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
-                <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
+                <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
                     {/* サイト情報 */}
                     <div>
-                        <h2 className="text-lg font-semibold mb-4">
-                            {process.env.NEXT_PUBLIC_SITE_NAME}
-                        </h2>
+                        <div className="mb-4 text-slate-800 dark:text-white">
+                            <PostFlowLogo className="h-5" />
+                        </div>
                         <p className="text-sm text-muted-foreground">
                             Spring Boot と Next.js で構築する
                             <br />
@@ -30,51 +32,64 @@ export async function PublicFooter() {
                     </div>
 
                     {/* リンク */}
-                    <div>
-                        <h2 className="text-lg font-semibold mb-4">
-                            コンテンツ
-                        </h2>
-                        <div className="flex gap-10">
-                            <ul className="space-y-2 text-sm">
-                                <li>
-                                    <Link
-                                        href="/posts"
-                                        className="text-muted-foreground hover:text-primary transition-colors"
-                                    >
-                                        記事一覧
-                                    </Link>
-                                </li>
-                                <li>
-                                    <Link
-                                        href="/categories"
-                                        className="text-muted-foreground hover:text-primary transition-colors"
-                                    >
-                                        カテゴリ
-                                    </Link>
-                                </li>
-                                <li>
-                                    <Link
-                                        href="/tags"
-                                        className="text-muted-foreground hover:text-primary transition-colors"
-                                    >
-                                        タグ
-                                    </Link>
-                                </li>
-                            </ul>
-
-                            <ul className="space-y-2 text-sm">
-                                {/* 1階層目のカテゴリを動的に表示 */}
-                                {topLevelCategories.map((category) => (
-                                    <li key={category.id}>
+                    <div className="grid grid-cols-2 gap-8">
+                        <div>
+                            <h2 className="text-lg font-semibold mb-4">
+                                コンテンツ
+                            </h2>
+                            <div className="flex gap-10">
+                                <ul className="space-y-2 text-sm">
+                                    <li>
                                         <Link
-                                            href={`/categories/${category.slug}`}
+                                            href="/posts"
                                             className="text-muted-foreground hover:text-primary transition-colors"
                                         >
-                                            {category.name}
+                                            記事一覧
                                         </Link>
                                     </li>
-                                ))}
-                            </ul>
+                                    <li>
+                                        <Link
+                                            href="/categories"
+                                            className="text-muted-foreground hover:text-primary transition-colors"
+                                        >
+                                            カテゴリ
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link
+                                            href="/tags"
+                                            className="text-muted-foreground hover:text-primary transition-colors"
+                                        >
+                                            タグ
+                                        </Link>
+                                    </li>
+                                </ul>
+
+                                <ul className="space-y-2 text-sm">
+                                    {/* 1階層目のカテゴリを動的に表示 */}
+                                    {topLevelCategories.map((category) => (
+                                        <li key={category.id}>
+                                            <Link
+                                                href={`/categories/${category.slug}`}
+                                                className="text-muted-foreground hover:text-primary transition-colors"
+                                            >
+                                                {category.name}
+                                            </Link>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+                        {/* GitHub リポジトリへのリンク */}
+                        <div>
+                            <h2 className="text-lg font-semibold mb-4">開発</h2>
+                            <Link
+                                href="https://github.com/koichiro-38lab/postflow"
+                                className="flex items-center text-muted-foreground hover:text-primary transition-colors"
+                            >
+                                <GitHubIcon className="w-5 h-5 mr-2" />
+                                GitHub
+                            </Link>
                         </div>
                     </div>
                 </div>

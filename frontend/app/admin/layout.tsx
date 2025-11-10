@@ -4,6 +4,19 @@ import { Metadata } from "next";
 
 export const metadata: Metadata = {
     title: process.env.NEXT_PUBLIC_SITE_NAME + " 管理画面" || "",
+    icons: {
+        icon: [
+            { url: "/favicon.svg", type: "image/svg+xml" },
+            { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+        ],
+        apple: [
+            {
+                url: "/apple-touch-icon.png",
+                sizes: "180x180",
+                type: "image/png",
+            },
+        ],
+    },
 };
 
 export default function AdminLayout({

@@ -17,6 +17,7 @@ export const metadata: Metadata = {
 // 動的レンダリング: ランタイムでAPIからデータ取得
 export const dynamic = "force-dynamic";
 export const revalidate = 10; // 10秒ごとに再検証（キャッシュ）
+import Image from "next/image";
 
 export default async function HomePage() {
     // 最新記事を取得（トップページ用に6件）
@@ -43,11 +44,17 @@ export default async function HomePage() {
                     >
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
                             <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-white">
-                                PostFlow
+                                <Image
+                                    src="/pf_logo.svg"
+                                    alt="PostFlow"
+                                    width={100}
+                                    height={100}
+                                    className="h-9 sm:h-12 w-auto mx-auto filter invert"
+                                />
                             </h1>
-                            <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto leading-7 md:leading-9">
+                            <p className="text-normal sm:text-xl text-gray-300 max-w-2xl mx-auto leading-7 md:leading-9">
                                 Spring Boot と Next.js で構築する
-                                <br className="hidden sm:block" />
+                                <br className="sm:block" />
                                 CMSプラットフォーム
                             </p>
                         </div>
