@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)]()
 [![Coverage 85%/70%](https://img.shields.io/badge/Coverage-85%2F70%25-green)]()
 
-# PostFlow - プロダクショングレード CMS プラットフォーム
+# PostFlow - モダンフルスタック CMS プラットフォーム
 
 **Spring Boot 3.5 + Next.js 15 によるモダンフルスタック構成**
 
