@@ -17,37 +17,39 @@ type StateConfig = {
     textClass: string;
 };
 
+// バッジの基本スタイル
 const BASE_BADGE_CLASS =
-    "inline-flex items-center gap-1 rounded-lg border text-xs px-2 py-1";
+    "inline-flex items-center gap-1 rounded-md border text-xs px-2 py-1";
 
+// 公開状態別のスタイル定義（ダーク/ライトモード対応）
 const STATE_STYLES: Record<PublicationState, StateConfig> = {
     DRAFT: {
         label: "下書き",
         icon: FileText,
-        badgeClass: "border-gray-700",
-        iconClass: "text-gray-500",
-        textClass: "text-gray-200",
+        badgeClass: "border-gray-400 dark:border-gray-600",
+        iconClass: "text-gray-500 dark:text-gray-400",
+        textClass: "text-gray-700 dark:text-gray-200",
     },
     PUBLISHED: {
         label: "公開済み",
         icon: Eye,
-        badgeClass: "border-gray-700",
-        iconClass: "text-green-600",
-        textClass: "text-gray-200",
+        badgeClass: "border-gray-400 dark:border-gray-600",
+        iconClass: "text-green-700 dark:text-green-500",
+        textClass: "text-gray-700 dark:text-gray-200",
     },
     SCHEDULED: {
         label: "予約公開",
         icon: Clock,
-        badgeClass: "border-gray-700",
-        iconClass: "text-amber-600",
-        textClass: "text-gray-200",
+        badgeClass: "border-gray-400 dark:border-gray-600",
+        iconClass: "text-amber-700 dark:text-amber-500",
+        textClass: "text-gray-700 dark:text-gray-200",
     },
     ARCHIVED: {
         label: "アーカイブ",
         icon: Archive,
-        badgeClass: "border-gray-700",
-        iconClass: "text-orange-600",
-        textClass: "text-gray-200",
+        badgeClass: "border-gray-400 dark:border-gray-600",
+        iconClass: "text-orange-700 dark:text-orange-500",
+        textClass: "text-gray-700 dark:text-gray-200",
     },
 };
 
